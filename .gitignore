@@ -1,0 +1,27 @@
+# dependencies and build output
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# secrets: copy .env.example to .env.local and fill it in
+.env
+.env*.local
+
+# Windows folder customisation
+desktop.ini
+folder-icon.ico
+folder-icon.svg
+
+# local tooling
+.claude/
+
+# kept on disk, not published
+# saved copy of a third-party website used as a design reference
+ref/
+# old render snapshot and old CV text with the previous (inaccurate) content
+ssr-check.html
+ИВАН БОГУШ.txt
+# original photo; the site uses public/images/ivan_bogush.jpg
+me.jpg

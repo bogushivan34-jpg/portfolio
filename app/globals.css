@@ -1,0 +1,275 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #ffffff;
+    --foreground: #3e3d3a;
+    --ink: #3e3d3a;
+    --ink-soft: #6f6d68;
+    --muted: #9c9c9c;
+    --faint: #c1bfb9;
+    --accent: #ff7e22;
+    --hairline: rgba(0, 0, 0, 0.15);
+    --hairline-soft: rgba(0, 0, 0, 0.08);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: "Metric Medium", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 13px;
+    line-height: 19px;
+    letter-spacing: 0.01em;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: var(--ink);
+    color: #ffffff;
+  }
+}
+
+/* ----- Vincenzo De Cotiis scrollbar ----- */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #ffffff;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d9d7d2;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* ----- Headline primitives (ref: .text-headline) ----- */
+
+/* Uppercase micro-label prefixed with an em-dash, as on the reference site */
+.dc-label {
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 10px;
+  line-height: 14px;
+  color: var(--ink);
+}
+
+.dc-label::before {
+  content: "–";
+  padding-right: 6px;
+  display: inline-block;
+  color: var(--ink);
+}
+
+.dc-label-muted {
+  color: var(--muted);
+}
+
+.dc-label-muted::before {
+  color: var(--muted);
+}
+
+/* Large editorial display line */
+.dc-display {
+  text-transform: uppercase;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.04;
+  color: var(--ink);
+}
+
+/* ----- Underline interactions (ref: .underline / .hover-underline / .nav A) ----- */
+
+.dc-link {
+  position: relative;
+  display: inline-block;
+  text-decoration: underline;
+  text-decoration-thickness: 1px !important;
+  text-underline-offset: 3px;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 0.15s linear, color 0.15s linear;
+  cursor: pointer;
+}
+
+.dc-link:hover {
+  text-decoration-color: var(--ink);
+}
+
+/* Fixed orange underline for primary calls-to-action (ref: .underline) */
+.dc-link-accent {
+  text-decoration-color: var(--accent);
+}
+
+.dc-link-accent:hover {
+  color: var(--accent);
+}
+
+/* Rail navigation: 1px rule fades in beneath the item (ref: .nav A::after) */
+.dc-nav-link {
+  position: relative;
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 11px;
+  padding: 2px 0;
+  color: var(--ink);
+  transition: color 0.2s ease-out;
+}
+
+.dc-nav-link::after {
+  content: " ";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  background-color: var(--ink);
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+}
+
+.dc-nav-link:hover::after,
+.dc-nav-link.is-active::after {
+  opacity: 1;
+}
+
+.dc-nav-link.is-active {
+  color: var(--ink);
+}
+
+/* ----- Hairline rules (ref: BODY HR / .img-wrapper shadow) ----- */
+
+.dc-hairline-t {
+  border-top: 1px solid var(--hairline);
+}
+
+.dc-hairline-b {
+  border-bottom: 1px solid var(--hairline);
+}
+
+.dc-hairline-r {
+  border-right: 1px solid var(--hairline);
+}
+
+.dc-hairline-l {
+  border-left: 1px solid var(--hairline);
+}
+
+.dc-hairline-soft-b {
+  border-bottom: 1px solid var(--hairline-soft);
+}
+
+/* Image frame: 1px inset keyline instead of shadow (ref: .img-wrapper) */
+.dc-frame {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+/* ----- Forms (ref: enquiry / subscribe forms) ----- */
+
+.dc-input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--hairline);
+  border-radius: 0;
+  padding: 10px 0;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s ease-out;
+}
+
+.dc-input::placeholder {
+  color: var(--faint);
+}
+
+.dc-input:focus {
+  border-bottom-color: var(--ink);
+}
+
+/* ----- Range slider: hairline track, ink rectangle thumb ----- */
+
+.dc-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 18px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.dc-range::-webkit-slider-runnable-track {
+  height: 1px;
+  background: var(--hairline);
+}
+
+.dc-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -5.5px;
+  width: 12px;
+  height: 12px;
+  background: var(--ink);
+  border: 0;
+  border-radius: 0;
+}
+
+.dc-range::-webkit-slider-thumb:hover {
+  background: var(--accent);
+}
+
+.dc-range::-moz-range-track {
+  height: 1px;
+  background: var(--hairline);
+}
+
+.dc-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: var(--ink);
+  border: 0;
+  border-radius: 0;
+}
+
+/* ----- Motion ----- */
+
+@keyframes dc-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: dc-fade-in 0.3s ease-out both;
+}
+
+@keyframes dc-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-rise {
+  animation: dc-rise 0.45s ease-out both;
+}
