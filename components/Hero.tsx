@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
+import CaseVisual from "@/components/CaseVisual";
 import { portfolioData } from "@/data/portfolioData";
 import { Language } from "@/types";
 
@@ -37,12 +37,10 @@ export default function Hero({ lang, onOpenInquiry }: HeroProps) {
               style={{ opacity: slideIndex === idx ? 1 : 0 }}
               aria-hidden={slideIndex !== idx}
             >
-              <Image
-                src={c.image}
+              <CaseVisual
+                caseStudy={c}
                 alt={ru ? c.title : c.titleEn ?? c.title}
-                fill
                 priority={idx === 0}
-                className="object-cover object-center"
                 sizes="(max-width: 1024px) 100vw, calc(100vw - 305px)"
               />
             </div>

@@ -55,6 +55,8 @@ export interface CaseStudy {
   locationEn?: string;
   period: string;
   image: string;
+  /** Mobile app screens shown side by side instead of the single cover image */
+  phoneShots?: string[];
   /** false keeps the case out of the landing slideshow */
   inHero?: boolean;
   link?: { label: string; url: string };

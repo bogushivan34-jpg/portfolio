@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
+import CaseVisual from "@/components/CaseVisual";
 import { portfolioData } from "@/data/portfolioData";
 import { CaseStudy, Language } from "@/types";
 
@@ -44,11 +44,9 @@ export default function SelectedWorks({ lang, onSelectCase }: SelectedWorksProps
               onClick={() => onSelectCase(cs)}
             >
               <div className="relative aspect-[650/460] w-full overflow-hidden dc-frame bg-white">
-                <Image
-                  src={cs.image}
+                <CaseVisual
+                  caseStudy={cs}
                   alt={ru ? cs.title : cs.titleEn ?? cs.title}
-                  fill
-                  className="object-cover object-center"
                   sizes="(max-width: 1024px) 100vw, 58vw"
                 />
               </div>

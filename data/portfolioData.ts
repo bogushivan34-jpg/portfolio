@@ -66,7 +66,12 @@ export const portfolioData = {
       location: "Онлайн",
       locationEn: "Online",
       period: "2026",
-      image: "/images/trouvere_meadow.jpg",
+      image: "/images/trouvere_mobile_songs.jpg",
+      phoneShots: [
+        "/images/trouvere_mobile_songs.jpg",
+        "/images/trouvere_mobile_village.jpg",
+        "/images/trouvere_mobile_lesson.jpg",
+      ],
       link: { label: "trouvere.app", url: "https://trouvere.app" },
       tagline:
         "Игровое приложение, которое учит слышать музыку. На нём я проверяю всё, что потом делаю для клиентов: бренд, Reels, каналы привлечения и аналитику.",
