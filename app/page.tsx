@@ -62,7 +62,7 @@ export default function Home() {
         {/* Section 02: Services - site, social setup, management, analytics */}
         <ServicesSection lang={lang} onOpenInquiry={() => setInquiryOpen(true)} />
 
-        {/* Section 03: Who it's for + inline enquiry form */}
+        {/* Section 03: Who it's for + contacts */}
         <BriefSection lang={lang} />
 
         {/* Section 04: Skills & tools */}

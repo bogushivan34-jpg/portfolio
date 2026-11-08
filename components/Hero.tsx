@@ -110,7 +110,7 @@ export default function Hero({ lang, onOpenInquiry }: HeroProps) {
                 onClick={onOpenInquiry}
                 className="dc-link text-[11px] uppercase tracking-[0.16em] text-[#3e3d3a]"
               >
-                {ru ? "Заявка" : "Enquiry"}
+                {ru ? "Контакты" : "Contacts"}
               </button>
             </div>
           </div>

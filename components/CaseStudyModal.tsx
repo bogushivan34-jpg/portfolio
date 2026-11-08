@@ -270,7 +270,7 @@ export default function CaseStudyModal({ caseStudy, lang, onClose, onOpenInquiry
               }}
               className="dc-link text-[10px] uppercase tracking-[0.16em] text-[#3e3d3a]"
             >
-              {ru ? "Оставить заявку" : "Send an enquiry"}
+              {ru ? "Контакты" : "Contacts"}
             </button>
           </div>
         </div>

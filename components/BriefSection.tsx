@@ -3,7 +3,7 @@
 import React from "react";
 import { portfolioData } from "@/data/portfolioData";
 import { Language } from "@/types";
-import BriefForm from "@/components/BriefForm";
+import ContactLinks from "@/components/ContactLinks";
 
 export default function BriefSection({ lang }: { lang: Language }) {
   const { audiences } = portfolioData;
@@ -15,7 +15,7 @@ export default function BriefSection({ lang }: { lang: Language }) {
       {/* Section header */}
       <div className="dc-hairline-t pt-6 mb-14 flex flex-col md:flex-row md:items-baseline justify-between gap-4">
         <h2 className="dc-display text-[28px] md:text-[36px] lg:text-[42px]">
-          {ru ? "Для кого · заявка" : "Who it's for · enquiry"}
+          {ru ? "Для кого · контакты" : "Who it's for · contacts"}
         </h2>
         <span className="dc-label dc-label-muted">
           {ru ? "Ответ в течение дня" : "Reply within a day"}
@@ -49,10 +49,15 @@ export default function BriefSection({ lang }: { lang: Language }) {
           </p>
         </div>
 
-        {/* Right: the form */}
+        {/* Right: contacts */}
         <div className="lg:col-span-7">
-          <span className="dc-label block mb-8">{ru ? "Оставить заявку" : "Send an enquiry"}</span>
-          <BriefForm lang={lang} />
+          <span className="dc-label block mb-8">{ru ? "Связаться" : "Get in touch"}</span>
+          <p className="text-[13px] leading-[21px] text-[#6f6d68] max-w-md mb-8">
+            {ru
+              ? "Напишите, чем занимаетесь и что нужно: сайт, соцсети или всё сразу."
+              : "Tell me what you do and what you need: a site, social pages or both."}
+          </p>
+          <ContactLinks lang={lang} />
         </div>
       </div>
     </section>

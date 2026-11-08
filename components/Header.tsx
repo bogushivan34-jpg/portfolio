@@ -85,7 +85,7 @@ export default function Header({ lang, setLang, onOpenInquiry, activeSection }: 
               ))}
               <li>
                 <button onClick={onOpenInquiry} className="dc-nav-link">
-                  {lang === "ru" ? "Оставить заявку" : "Enquiry"}
+                  {lang === "ru" ? "Контакты" : "Contacts"}
                 </button>
               </li>
             </ul>
@@ -156,7 +156,7 @@ export default function Header({ lang, setLang, onOpenInquiry, activeSection }: 
                 <li>
                   <button onClick={onOpenInquiry} className="dc-nav-link text-[16px]">
                     <span className="text-[10px] text-[#9c9c9c] mr-3">06</span>
-                    {lang === "ru" ? "Оставить заявку" : "Enquiry"}
+                    {lang === "ru" ? "Контакты" : "Contacts"}
                   </button>
                 </li>
               </ul>

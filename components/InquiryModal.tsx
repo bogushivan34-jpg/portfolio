@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Language } from "@/types";
-import BriefForm from "@/components/BriefForm";
+import ContactLinks from "@/components/ContactLinks";
 
 interface InquiryModalProps {
   isOpen: boolean;
@@ -26,7 +26,7 @@ export default function InquiryModal({ isOpen, lang, onClose }: InquiryModalProp
         <div className="flex items-start justify-between pb-8 dc-hairline-b mb-10">
           <div>
             <span className="dc-label dc-label-muted block mb-3">
-              {ru ? "Заявка" : "Enquiry"}
+              {ru ? "Контакты" : "Contacts"}
             </span>
             <h3 className="dc-display text-[24px] md:text-[30px]">
               {ru ? "Сайт, соцсети, продвижение" : "Website, social, promotion"}
@@ -40,39 +40,13 @@ export default function InquiryModal({ isOpen, lang, onClose }: InquiryModalProp
           </button>
         </div>
 
-        {/* Direct channels */}
-        <div className="dc-hairline-b pb-8 mb-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            <div>
-              <span className="text-[9px] uppercase tracking-[0.14em] text-[#9c9c9c] block mb-2">
-                {ru ? "Telegram · быстрее всего" : "Telegram · fastest"}
-              </span>
-              <a
-                href="https://t.me/myfeelinzz"
-                target="_blank"
-                rel="noreferrer"
-                className="dc-link dc-link-accent text-[13px]"
-              >
-                @myfeelinzz
-              </a>
-            </div>
-            <div>
-              <span className="text-[9px] uppercase tracking-[0.14em] text-[#9c9c9c] block mb-2">
-                {ru ? "Почта" : "Email"}
-              </span>
-              <a href="mailto:bogushiv@mail.ru" className="dc-link text-[13px] text-[#3e3d3a]">
-                bogushiv@mail.ru
-              </a>
-            </div>
-          </div>
-        </div>
-
-        {/* Brief form */}
         <div className="grow">
-          <span className="dc-label dc-label-muted block my-8">
-            {ru ? "Или оставьте заявку здесь" : "Or leave an enquiry here"}
-          </span>
-          <BriefForm lang={lang} />
+          <p className="text-[13px] leading-[21px] text-[#6f6d68] max-w-sm mb-10">
+            {ru
+              ? "Напишите, чем занимаетесь и что нужно: сайт, соцсети или всё сразу. Отвечу в течение дня."
+              : "Tell me what you do and what you need: a site, social pages or both. I'll reply within a day."}
+          </p>
+          <ContactLinks lang={lang} />
         </div>
 
         {/* Footer note */}

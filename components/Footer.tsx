@@ -52,7 +52,7 @@ export default function Footer({ lang, onOpenInquiry }: { lang: Language; onOpen
                   onClick={onOpenInquiry}
                   className="dc-link dc-link-accent text-[11px] uppercase tracking-[0.14em]"
                 >
-                  {ru ? "Оставить заявку" : "Enquiry"}
+                  {ru ? "Контакты" : "Contacts"}
                 </button>
               </li>
               <li>
@@ -70,15 +70,6 @@ export default function Footer({ lang, onOpenInquiry }: { lang: Language; onOpen
             © {new Date().getFullYear()} {ru ? "Иван Богуш" : "Ivan Bogush"} ·{" "}
             {ru ? "Москва / удалённо" : "Moscow / remote"}
           </p>
-        </div>
-
-        <div className="pb-4 flex flex-wrap gap-x-7 gap-y-2 text-[9px] uppercase tracking-[0.1em]">
-          <a href="/privacy" className="dc-link text-[#9c9c9c]">
-            {ru ? "Политика обработки персональных данных" : "Privacy policy (RU)"}
-          </a>
-          <a href="/consent" className="dc-link text-[#9c9c9c]">
-            {ru ? "Согласие на обработку данных" : "Data processing consent (RU)"}
-          </a>
         </div>
 
         <p className="pb-8 text-[9px] leading-[14px] text-[#c1bfb9] max-w-2xl">
