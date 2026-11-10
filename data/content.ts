@@ -640,10 +640,71 @@ export const contact = {
     ru: "Напишите пару строк: чем вы занимаетесь и чего сейчас не хватает. Отвечу, чем могу помочь и с чего начать.",
     en: "Send me a couple of lines: what you do and what's missing right now. I'll reply with how I can help and where to start.",
   } as L,
+  orDirect: { ru: "Или напрямую", en: "Or directly" } as L,
   telegramLabel: { ru: "Telegram — быстрее всего", en: "Telegram, the fastest way" } as L,
   emailLabel: { ru: "Почта", en: "Email" } as L,
   disclaimer: {
     ru: "* Instagram принадлежит компании Meta, признанной экстремистской организацией и запрещённой на территории РФ.",
     en: "* Instagram is owned by Meta, which is designated an extremist organisation and banned in Russia.",
   } as L,
+};
+
+/*
+ * The contact form. It posts to the Cloudflare Worker in worker/ (deployed as ivanbogush-contact), which emails the
+ * enquiry through Resend. Russian ISPs slow Cloudflare down, so it goes through the relay at form.ivanbogush.ru
+ * (worker/relay) first, and straight to workers.dev only if the relay can't be reached. On localhost it posts to the
+ * Worker run locally instead.
+ */
+export const formEndpoint = {
+  live: ["https://form.ivanbogush.ru", "https://ivanbogush-contact.bogushivan34.workers.dev"],
+  local: ["http://localhost:8788"],
+};
+
+export const form = {
+  title: { ru: "Оставить заявку", en: "Send an enquiry" } as L,
+  name: { ru: "Как вас зовут", en: "Your name" } as L,
+  contact: { ru: "Telegram, телефон или почта", en: "Telegram, phone or email" } as L,
+  profession: { ru: "Чем вы занимаетесь", en: "What you do" } as L,
+  professionHint: { ru: "Например, психолог, репетитор, школа", en: "For example, a psychologist, a tutor, a school" } as L,
+  needsLabel: { ru: "Что нужно", en: "What you need" } as L,
+  needs: [
+    { id: "site", label: { ru: "Сайт", en: "Website" } },
+    { id: "content", label: { ru: "Соцсети и контент", en: "Social pages and content" } },
+    { id: "channels", label: { ru: "Каналы привлечения", en: "Acquisition channels" } },
+    { id: "analytics", label: { ru: "Аналитика", en: "Analytics" } },
+    { id: "unsure", label: { ru: "Пока не знаю", en: "Not sure yet" } },
+  ] as { id: string; label: L }[],
+  message: { ru: "Коротко о задаче", en: "Your task in a few lines" } as L,
+  messageHint: {
+    ru: "Например: «нет сайта, Instagram* веду от случая к случаю, хочу больше записей»",
+    en: "For example: “no website, I post on Instagram* now and then, I want more bookings”",
+  } as L,
+  required: { ru: "обязательные поля", en: "required fields" } as L,
+  consentBefore: { ru: "Даю ", en: "I give my " } as L,
+  consentLink: { ru: "согласие на обработку персональных данных", en: "consent to the processing of my personal data" } as L,
+  consentMiddle: { ru: " и принимаю ", en: " and accept the " } as L,
+  privacyLink: { ru: "политику обработки данных", en: "privacy policy" } as L,
+  consentAfter: { ru: ".", en: " (both in Russian)." } as L,
+  submit: { ru: "Отправить заявку", en: "Send enquiry" } as L,
+  sending: { ru: "Отправляю…", en: "Sending…" } as L,
+  replyNote: { ru: "Отвечу в течение дня", en: "I reply within a day" } as L,
+  sentTitle: { ru: "Заявка отправлена", en: "Enquiry sent" } as L,
+  sentText: {
+    ru: "Спасибо! Отвечу в течение дня по контакту, который вы оставили. Если срочно — напишите в Telegram.",
+    en: "Thank you! I'll reply within a day using the contact you left. If it's urgent, message me on Telegram.",
+  } as L,
+  sendAnother: { ru: "Отправить ещё одну", en: "Send another" } as L,
+  failTitle: { ru: "Не получилось отправить", en: "Couldn't send it" } as L,
+  failText: {
+    ru: "Форма сейчас не отвечает. Ваша заявка ниже — отправьте её одной кнопкой, ничего не придётся набирать заново.",
+    en: "The form isn't responding right now. Your enquiry is below: send it with one button, without retyping anything.",
+  } as L,
+  rateLimited: {
+    ru: "Слишком много попыток подряд. Подождите минуту или отправьте заявку одной из кнопок ниже.",
+    en: "Too many tries in a row. Wait a minute, or send it with one of the buttons below.",
+  } as L,
+  viaTelegram: { ru: "Отправить в Telegram", en: "Send via Telegram" } as L,
+  viaEmail: { ru: "Отправить письмом", en: "Send by email" } as L,
+  back: { ru: "Назад к форме", en: "Back to the form" } as L,
+  mailSubject: { ru: "Заявка с сайта", en: "Website enquiry" } as L,
 };

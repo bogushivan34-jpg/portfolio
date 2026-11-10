@@ -1,0 +1,24 @@
+// The contact form's backend: takes a POST from the portfolio's form and emails it to Ivan through Resend.
+// Deployed with `npm run deploy` to <name>.<account>.workers.dev (ivanbogush.ru's DNS is at reg.ru, not Cloudflare).
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "ivanbogush-contact",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-10-01",
+	"workers_dev": true,
+	"observability": { "enabled": true },
+	// Public settings. The secrets are RESEND_API_KEY and RELAY_KEY (the form.ivanbogush.ru relay's key, relay/README.md),
+	// set with `npx wrangler secret put <NAME>` (and in .dev.vars for `wrangler dev`). Without RESEND_API_KEY it answers 503 and the form offers
+	// "send via Telegram / by email" with the message already filled in.
+	"vars": {
+		"MAIL_TO": "bogushiv@mail.ru",
+		// The sending address must be on a domain verified in Resend.
+		"MAIL_FROM": "Сайт ivanbogush.ru <form@ivanbogush.ru>",
+		// Pages allowed to post the form (CORS). Comma-separated.
+		"ALLOWED_ORIGINS": "https://ivanbogush.ru,https://www.ivanbogush.ru,http://localhost:3210"
+	},
+	// At most 3 submissions per visitor (by IP) per minute.
+	"ratelimits": [
+		{ "name": "LIMITER", "namespace_id": "1001", "simple": { "limit": 3, "period": 60 } }
+	]
+}

@@ -1,0 +1,2 @@
+# Copy to .dev.vars (git-ignored) for `npm run dev`. Leave the key empty to test the "not configured" path.
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxx
