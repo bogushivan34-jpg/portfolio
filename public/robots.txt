@@ -1,0 +1,4 @@
+User-agent: *
+# Client site previews are private links.
+Disallow: /works/
+Disallow: /previews/

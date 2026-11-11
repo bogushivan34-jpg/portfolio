@@ -11,7 +11,7 @@ export default function Header({ lang, onToggleLang }: { lang: Lang; onToggleLan
         </a>
 
         <nav className="hidden md:block" aria-label={ru ? "Разделы" : "Sections"}>
-          <ul className="flex gap-8 text-[15px]">
+          <ul className="flex gap-5 text-[15px] lg:gap-8">
             {nav.map((item) => (
               <li key={item.id}>
                 <a href={`#${item.id}`} className="text-muted transition-colors hover:text-ink">

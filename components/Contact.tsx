@@ -1,7 +1,19 @@
 import ContactForm from "@/components/ContactForm";
-import { Lang, contact, profile } from "@/data/content";
+import { Lang, contact, legalLinks, profile } from "@/data/content";
 
-export default function Contact({ lang }: { lang: Lang }) {
+const directLink =
+  "mt-1 inline-block text-[22px] font-semibold underline decoration-white/30 underline-offset-[6px] transition-colors hover:decoration-white md:text-[24px]";
+
+export default function Contact({
+  lang,
+  order,
+  onClearOrder,
+}: {
+  lang: Lang;
+  /** the price option chosen with "Order", if any */
+  order: string | null;
+  onClearOrder: () => void;
+}) {
   return (
     <footer id="contact" className="mt-16 bg-ink text-white md:mt-24">
       <div className="wrap py-14 md:py-20">
@@ -18,36 +30,55 @@ export default function Contact({ lang }: { lang: Lang }) {
             <div className="mt-4 space-y-6">
               <div className="border-t border-white/20 pt-4">
                 <p className="text-[13px] text-white/60">{contact.telegramLabel[lang]}</p>
-                <a
-                  href={profile.telegramUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-1 inline-block text-[22px] font-semibold underline decoration-white/30 underline-offset-[6px] transition-colors hover:decoration-white md:text-[24px]"
-                >
+                <a href={profile.telegramUrl} target="_blank" rel="noopener noreferrer" className={directLink}>
                   {profile.telegram}
                 </a>
               </div>
               <div className="border-t border-white/20 pt-4">
                 <p className="text-[13px] text-white/60">{contact.emailLabel[lang]}</p>
-                <a
-                  href={`mailto:${profile.email}`}
-                  className="mt-1 inline-block text-[22px] font-semibold underline decoration-white/30 underline-offset-[6px] transition-colors hover:decoration-white md:text-[24px]"
-                >
+                <a href={`mailto:${profile.email}`} className={directLink}>
                   {profile.email}
+                </a>
+              </div>
+              <div className="border-t border-white/20 pt-4">
+                <p className="text-[13px] text-white/60">{contact.phoneLabel[lang]}</p>
+                <a href={profile.phoneHref} className={`${directLink} whitespace-nowrap`}>
+                  {profile.phone}
                 </a>
               </div>
             </div>
           </div>
 
-          <ContactForm lang={lang} />
+          <div id="order">
+            <ContactForm lang={lang} order={order} onClearOrder={onClearOrder} />
+          </div>
         </div>
 
-        <div className="mt-14 border-t border-white/20 pt-6 text-[13px] leading-[1.5] text-white/60">
+        {/* Who the customer deals with and pays: name, tax status, INN and contacts, then the documents */}
+        <div className="mt-14 border-t border-white/20 pt-6 text-[13px] leading-[1.6] text-white/60">
           <p>
-            © {new Date().getFullYear()} {profile.name[lang]} · {lang === "ru" ? "ИНН" : "INN"} 673207647506 · {profile.location[lang]} ·{" "}
-            <a href="/privacy" className="underline underline-offset-2 hover:text-white">
-              {lang === "ru" ? "Политика обработки данных" : "Privacy policy"}
-            </a>
+            {profile.legalName[lang]}, {profile.taxStatus[lang]} · {lang === "ru" ? "ИНН" : "INN"} {profile.inn}
+          </p>
+          <p className="mt-1">
+            <a href={profile.phoneHref} className="whitespace-nowrap hover:text-white">
+              {profile.phone}
+            </a>{" "}
+            ·{" "}
+            <a href={`mailto:${profile.email}`} className="hover:text-white">
+              {profile.email}
+            </a>{" "}
+            · {profile.location[lang]}
+          </p>
+          <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1">
+            {legalLinks.map((item) => (
+              <a key={item.href} href={item.href} className="underline underline-offset-2 hover:text-white">
+                {item.label[lang]}
+              </a>
+            ))}
+            {contact.legalInRussian[lang] && <span>{contact.legalInRussian[lang]}</span>}
+          </p>
+          <p className="mt-3">
+            © {new Date().getFullYear()} {profile.name[lang]}
           </p>
           <p className="mt-2 max-w-[720px]">{contact.disclaimer[lang]}</p>
         </div>

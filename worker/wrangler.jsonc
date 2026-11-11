@@ -14,8 +14,9 @@
 		"MAIL_TO": "bogushiv@mail.ru",
 		// The sending address must be on a domain verified in Resend.
 		"MAIL_FROM": "Сайт ivanbogush.ru <form@ivanbogush.ru>",
-		// Pages allowed to post the form (CORS). Comma-separated.
-		"ALLOWED_ORIGINS": "https://ivanbogush.ru,https://www.ivanbogush.ru,http://localhost:3210"
+		// Pages allowed to post the form (CORS). Comma-separated. The http:// ones are for visitors who reach the site
+		// without HTTPS (GitHub Pages had no certificate for ivanbogush.ru at first).
+		"ALLOWED_ORIGINS": "https://ivanbogush.ru,https://www.ivanbogush.ru,http://ivanbogush.ru,http://www.ivanbogush.ru,http://localhost:3210"
 	},
 	// At most 3 submissions per visitor (by IP) per minute.
 	"ratelimits": [

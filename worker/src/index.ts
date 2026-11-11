@@ -3,6 +3,9 @@
  *
  * POST / with JSON { name, contact, profession?, needs?, message?, consent, lang?, website? }
  *   → checks it, then emails it to MAIL_TO through Resend (resend.com) from MAIL_FROM.
+ * POST / with JSON { kind: "feedback", work: { id, title }, message, name?, contact?, consent, website? }
+ *   → feedback from a client on a site preview at ivanbogush.ru/works/<id>: the message is required, name and
+ *     contact are optional (the preview already says who it's for).
  *
  * Answers:
  *   200 { ok: true }                 sent (or a bot filled the hidden `website` field: we pretend and send nothing)
@@ -32,6 +35,9 @@ export interface Env {
 }
 
 interface Enquiry {
+	kind: "enquiry" | "feedback";
+	/** the preview the feedback is about */
+	work?: { id: string; title: string };
 	name: string;
 	contact: string;
 	profession: string;
@@ -40,7 +46,8 @@ interface Enquiry {
 	lang: "ru" | "en";
 }
 
-const LIMITS = { name: 120, contact: 120, profession: 120, need: 60, needs: 8, message: 3000 };
+const LIMITS = { name: 120, contact: 120, profession: 120, need: 60, needs: 8, message: 3000, workTitle: 160 };
+const WORK_ID = /^[a-z0-9]{4,16}$/;
 
 const clip = (v: unknown, max: number) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : "");
 // The message keeps its line breaks.
@@ -88,44 +95,55 @@ function json(body: unknown, status: number, origin: string | null): Response {
 export function parseEnquiry(body: Record<string, unknown>): Enquiry | { error: string } {
 	const name = clip(body.name, LIMITS.name);
 	const contact = clip(body.contact, LIMITS.contact);
+	const message = clipText(body.message, LIMITS.message);
+	const lang = body.lang === "en" ? "en" : "ru";
+
+	if (body.kind === "feedback") {
+		const w = (body.work ?? {}) as Record<string, unknown>;
+		const id = clip(w.id, 16);
+		if (!WORK_ID.test(id)) return { error: "bad_work" };
+		if (!message) return { error: "missing_fields" };
+		if (body.consent !== true) return { error: "no_consent" };
+		return { kind: "feedback", work: { id, title: clip(w.title, LIMITS.workTitle) || id }, name, contact, profession: "", needs: [], message, lang };
+	}
+
 	if (!name || !contact) return { error: "missing_fields" };
 	// 152-ФЗ: nothing is processed without the visitor's explicit consent from the form's checkbox.
 	if (body.consent !== true) return { error: "no_consent" };
 	const needs = Array.isArray(body.needs)
 		? body.needs.map((n) => clip(n, LIMITS.need)).filter(Boolean).slice(0, LIMITS.needs)
 		: [];
-	return {
-		name,
-		contact,
-		profession: clip(body.profession, LIMITS.profession),
-		needs,
-		message: clipText(body.message, LIMITS.message),
-		lang: body.lang === "en" ? "en" : "ru",
-	};
+	return { kind: "enquiry", name, contact, profession: clip(body.profession, LIMITS.profession), needs, message, lang };
 }
 
 export function buildEmail(e: Enquiry, now = new Date()) {
 	const when = now.toLocaleString("ru-RU", { timeZone: "Europe/Moscow", dateStyle: "long", timeStyle: "short" });
-	const rows: [string, string][] = [
-		["Имя", e.name],
-		["Контакт", e.contact],
-		...(e.profession ? [["Чем занимается", e.profession] as [string, string]] : []),
-		...(e.needs.length ? [["Что нужно", e.needs.join(", ")] as [string, string]] : []),
-		["Язык сайта", e.lang === "en" ? "английский" : "русский"],
-	];
+	const feedback = e.kind === "feedback";
+	const heading = feedback ? `Отзыв на превью: ${e.work?.title}` : "Новая заявка с сайта ivanbogush.ru";
+	const rows = (
+		[
+			...(feedback ? [["Превью", `ivanbogush.ru/works/${e.work?.id}`]] : []),
+			["Имя", e.name],
+			["Контакт", e.contact],
+			["Чем занимается", e.profession],
+			["Что нужно", e.needs.join(", ")],
+			["Язык сайта", e.lang === "en" ? "английский" : "русский"],
+		] as [string, string][]
+	).filter(([, v]) => v);
 	const consent = `Согласие на обработку персональных данных получено ${when} (МСК).`;
+	const messageLabel = feedback ? "Отзыв" : "Задача";
 
 	const text = [
-		"Новая заявка с сайта ivanbogush.ru",
+		heading,
 		"",
 		...rows.map(([k, v]) => `${k}: ${v}`),
-		...(e.message ? ["", "Задача:", e.message] : []),
+		...(e.message ? ["", `${messageLabel}:`, e.message] : []),
 		"",
 		consent,
 	].join("\n");
 
 	const html = `<!doctype html><html><body style="font-family:-apple-system,Segoe UI,Arial,sans-serif;font-size:15px;line-height:1.5;color:#15171a">
-<p style="margin:0 0 16px;font-size:17px;font-weight:600">Новая заявка с сайта ivanbogush.ru</p>
+<p style="margin:0 0 16px;font-size:17px;font-weight:600">${escapeHtml(heading)}</p>
 <table cellpadding="0" cellspacing="0" style="border-collapse:collapse">
 ${rows
 	.map(
@@ -134,12 +152,12 @@ ${rows
 	)
 	.join("\n")}
 </table>
-${e.message ? `<p style="margin:20px 0 6px;color:#676d76">Задача</p><p style="margin:0;white-space:pre-wrap">${escapeHtml(e.message)}</p>` : ""}
+${e.message ? `<p style="margin:20px 0 6px;color:#676d76">${messageLabel}</p><p style="margin:0;white-space:pre-wrap">${escapeHtml(e.message)}</p>` : ""}
 <p style="margin:24px 0 0;font-size:13px;color:#676d76">${escapeHtml(consent)}</p>
 </body></html>`;
 
 	return {
-		subject: `Заявка с сайта: ${e.name}`,
+		subject: feedback ? `Отзыв на превью: ${e.work?.title}` : `Заявка с сайта: ${e.name}`,
 		text,
 		html,
 		// Replying goes straight to the visitor when they left an email address.

@@ -12,6 +12,8 @@
  * - ПроДостояние.Крым: makam/deploy-reg-ru (page and archive counts), makam/presentation.
  * - Мидийное место: Instagram screenshots; 100–200 likes on the best reels per Ivan.
  * - Education, languages, award: MGIK documents and the diploma scan.
+ * - Legal name, tax status, INN and phone: given by Ivan for the YooKassa application (YOOKASSA_REQUIREMENTS.md).
+ * - Prices: given by Ivan on 11 November 2026 as provisional ("not a final version"), see `prices` below.
  *
  * Where something was not measured, the copy says so. Keep it that way.
  */
@@ -49,13 +51,23 @@ export const profile = {
   telegram: "@myfeelinzz",
   telegramUrl: "https://t.me/myfeelinzz",
   email: "bogushiv@mail.ru",
+  phone: "+7 999 809-02-08",
+  phoneHref: "tel:+79998090208",
   portrait: "/images/ivan_bogush.jpg",
+  /* Who the customer pays: shown in the footer and in the legal pages. YooKassa's review looks for these. */
+  legalName: { ru: "Богуш Иван Владиславович", en: "Bogush Ivan Vladislavovich" } as L,
+  taxStatus: {
+    ru: "самозанятый, плательщик налога на профессиональный доход",
+    en: "self-employed, professional income tax payer",
+  } as L,
+  inn: "673207647506",
 };
 
 export const nav: { id: string; label: L }[] = [
   { id: "work", label: { ru: "Кейсы", en: "Work" } },
   { id: "approach", label: { ru: "Подход", en: "Approach" } },
   { id: "services", label: { ru: "Услуги", en: "Services" } },
+  { id: "prices", label: { ru: "Цены", en: "Prices" } },
   { id: "about", label: { ru: "Обо мне", en: "About" } },
 ];
 
@@ -590,6 +602,87 @@ export const services = {
   } as L,
 };
 
+/*
+ * Prices for a site: shown on the main page (#prices) and in the panel of a client's preview (/works/<id>).
+ * PROVISIONAL: Ivan gave these on 11 November 2026 as "not a final version". Change them here and nowhere else:
+ * the offer (/oferta) and the payment page (/payment) point at this list instead of repeating the figures.
+ */
+export interface Tier {
+  id: string;
+  name: L;
+  /** roubles */
+  price: number;
+  summary: L;
+  includes: L[];
+}
+
+export const formatPrice = (roubles: number, lang: Lang) =>
+  `${String(roubles).replace(/\B(?=(\d{3})+(?!\d))/g, lang === "ru" ? "\u00a0" : ",")}\u00a0₽`;
+
+export const prices = {
+  title: { ru: "Цены", en: "Prices" } as L,
+  lead: {
+    ru: "Сайт для специалиста или небольшого проекта: три варианта, цена известна до заказа.",
+    en: "A website for an independent professional or a small business: three options, with the price known before you order.",
+  } as L,
+  tiers: [
+    {
+      id: "as-is",
+      name: { ru: "Забрать как есть", en: "As is" },
+      price: 14900,
+      summary: { ru: "Готовый сайт, который вы размещаете сами", en: "The finished site, which you host yourself" },
+      includes: [
+        { ru: "Сайт: исходный код и все файлы", en: "The site: source code and all files" },
+        { ru: "Одна небольшая правка: текст или фотография", en: "One small change: a text or a photo" },
+        { ru: "Домен и хостинг остаются на вашей стороне", en: "The domain and hosting stay on your side" },
+      ],
+    },
+    {
+      id: "turnkey",
+      name: { ru: "Под ключ", en: "Turnkey" },
+      price: 24900,
+      summary: { ru: "Сайт, запущенный на вашем домене", en: "The site, live on your own domain" },
+      includes: [
+        { ru: "Сайт и один круг правок", en: "The site and one round of revisions" },
+        { ru: "Регистрация домена .ru", en: "Registration of a .ru domain" },
+        { ru: "Настройка бесплатного хостинга", en: "Free hosting, set up for you" },
+        { ru: "Заявки с формы приходят вам в Telegram", en: "Enquiries from the form arrive in your Telegram" },
+        { ru: "Год мелких правок текста", en: "A year of small text updates" },
+      ],
+    },
+    {
+      id: "premium",
+      name: { ru: "Премиум", en: "Premium" },
+      price: 45000,
+      summary: { ru: "Несколько страниц, онлайн-оплата и поиск", en: "Several pages, online payment and search" },
+      includes: [
+        { ru: "Всё из варианта «Под ключ»", en: "Everything in Turnkey" },
+        { ru: "Несколько страниц: блог или статьи, полная галерея работ", en: "Several pages: a blog or articles, a full gallery of your work" },
+        { ru: "Онлайн-оплата на сайте: ЮKassa или Robokassa", en: "Online payment on the site: YooKassa or Robokassa" },
+        { ru: "Настройка сайта для поиска в Яндексе", en: "Set-up for Yandex search" },
+      ],
+    },
+  ] as Tier[],
+  order: { ru: "Заказать", en: "Order" } as L,
+  otherLabel: { ru: "Остальные услуги", en: "Other services" } as L,
+  other: {
+    ru: "Соцсети и контент, каналы привлечения и аналитику считаю под задачу. Цену называю до начала работы и фиксирую в переписке.",
+    en: "Social content, acquisition channels and analytics are priced per task. I name the price before any work starts and confirm it in writing.",
+  } as L,
+  paymentLabel: { ru: "Оплата", en: "Payment" } as L,
+  payment: {
+    ru: "После заявки подтверждаю состав заказа и срок и присылаю счёт или ссылку на оплату: банковской картой или через СБП. Чек приходит из приложения «Мой налог».",
+    en: "After your enquiry I confirm what's included and the timeline, and send an invoice or a payment link: by bank card or through SBP (Russia's Faster Payments System). You get a receipt from the “My Tax” app.",
+  } as L,
+};
+
+/* The documents a customer agrees to; in Russian only. Linked from the footer, the price list and the previews. */
+export const legalLinks: { href: string; label: L }[] = [
+  { href: "/oferta", label: { ru: "Публичная оферта", en: "Public offer" } },
+  { href: "/payment", label: { ru: "Оплата и возврат", en: "Payment and refunds" } },
+  { href: "/privacy", label: { ru: "Политика обработки данных", en: "Privacy policy" } },
+];
+
 export const about = {
   title: { ru: "Обо мне", en: "About" } as L,
   bio: [
@@ -643,6 +736,8 @@ export const contact = {
   orDirect: { ru: "Или напрямую", en: "Or directly" } as L,
   telegramLabel: { ru: "Telegram — быстрее всего", en: "Telegram, the fastest way" } as L,
   emailLabel: { ru: "Почта", en: "Email" } as L,
+  phoneLabel: { ru: "Телефон", en: "Phone" } as L,
+  legalInRussian: { ru: "", en: "(in Russian)" } as L,
   disclaimer: {
     ru: "* Instagram принадлежит компании Meta, признанной экстремистской организацией и запрещённой на территории РФ.",
     en: "* Instagram is owned by Meta, which is designated an extremist organisation and banned in Russia.",
@@ -707,4 +802,125 @@ export const form = {
   viaEmail: { ru: "Отправить письмом", en: "Send by email" } as L,
   back: { ru: "Назад к форме", en: "Back to the form" } as L,
   mailSubject: { ru: "Заявка с сайта", en: "Website enquiry" } as L,
+
+  /* Shown when the form was opened with "Order" on a price */
+  orderTitle: { ru: "Оформить заказ", en: "Place an order" } as L,
+  orderLabel: { ru: "Заказ", en: "Order" } as L,
+  orderRemove: { ru: "Убрать", en: "Remove" } as L,
+  orderNote: {
+    ru: "Платить сейчас не нужно: сначала подтвержу состав и срок, потом пришлю счёт.",
+    en: "Nothing to pay now: I'll confirm what's included and the timeline first, then send an invoice.",
+  } as L,
+  orderSentText: {
+    ru: "Спасибо! В течение дня подтвержу состав заказа и срок и пришлю счёт по контакту, который вы оставили.",
+    en: "Thank you! Within a day I'll confirm what's included and the timeline, and send an invoice to the contact you left.",
+  } as L,
+};
+
+/*
+ * The preview page for a client's site concept: ivanbogush.ru/works/<id> (app/works/[id], data/works.json).
+ * The pricing tab shows the three options from `prices` above. A work's own `pricing` in data/works.json
+ * (a price agreed for that client) replaces them.
+ */
+export interface Pricing {
+  /** null: no figure yet, the page says it's agreed on a call */
+  price: L | null;
+  timeline?: L;
+  includes: L[];
+}
+
+export const preview = {
+  label: { ru: "Концепция сайта", en: "Website concept" } as L,
+  desktop: { ru: "Компьютер", en: "Desktop" } as L,
+  phone: { ru: "Телефон", en: "Phone" } as L,
+  openSeparately: { ru: "Открыть отдельно", en: "Open on its own" } as L,
+  storyButton: { ru: "Идея сайта", en: "The idea" } as L,
+  storyShort: { ru: "Идея", en: "Idea" } as L,
+  feedbackButton: { ru: "Оставить отзыв", en: "Leave feedback" } as L,
+  feedbackShort: { ru: "Отзыв", en: "Feedback" } as L,
+  pricingButton: { ru: "Стоимость и контакты", en: "Pricing and contacts" } as L,
+  pricingShort: { ru: "Цена", en: "Pricing" } as L,
+  close: { ru: "Закрыть", en: "Close" } as L,
+
+  /* The story tab: why this client needs this site. The story itself is in the work (data/works.json). */
+  story: {
+    label: { ru: "Идея сайта", en: "The idea behind the site" } as L,
+    minutes: { ru: "мин чтения", en: "min read" } as L,
+    seen: { ru: "Что я увидел", en: "What I saw" } as L,
+    show: { ru: "Показать на сайте", en: "Show on the site" } as L,
+    sources: { ru: "На что я опирался", en: "What this is based on" } as L,
+    toFeedback: { ru: "Написать, что думаете", en: "Tell me what you think" } as L,
+    toPricing: { ru: "Стоимость и что дальше", en: "Pricing and next steps" } as L,
+    nudge: { ru: "Почему сайт именно такой? Короткая история", en: "Why the site looks like this: a short story" } as L,
+    nudgeRead: { ru: "Читать", en: "Read" } as L,
+    nudgeClose: { ru: "Скрыть", en: "Hide" } as L,
+  },
+  frameTitle: { ru: "Превью сайта", en: "Site preview" } as L,
+  placeholders: {
+    ru: "Черновик: часть фотографий пока заменена заглушками.",
+    en: "Draft: some photos are placeholders for now.",
+  } as L,
+
+  feedback: {
+    title: { ru: "Что скажете?", en: "What do you think?" } as L,
+    lead: {
+      ru: "Напишите, что нравится и что поменять: тексты, цвета, порядок блоков, что угодно. Можно писать прямо по ходу просмотра — окно не мешает листать сайт.",
+      en: "Tell me what you like and what to change: copy, colours, the order of sections, anything. Write as you browse: this panel doesn't block the site.",
+    } as L,
+    message: { ru: "Ваш отзыв", en: "Your feedback" } as L,
+    messageHint: {
+      ru: "Например: «первый экран нравится, а блок со школой хочется короче»",
+      en: "For example: “love the first screen, the school section could be shorter”",
+    } as L,
+    name: { ru: "Как к вам обращаться", en: "Your name" } as L,
+    contact: { ru: "Куда ответить", en: "Where to reply" } as L,
+    contactHint: { ru: "Telegram, телефон или почта", en: "Telegram, phone or email" } as L,
+    optional: { ru: "по желанию", en: "optional" } as L,
+    submit: { ru: "Отправить отзыв", en: "Send feedback" } as L,
+    sending: { ru: "Отправляю…", en: "Sending…" } as L,
+    sentTitle: { ru: "Спасибо, отзыв у меня", en: "Thank you, I've got it" } as L,
+    sentText: {
+      ru: "Внесу правки и пришлю обновлённую версию по этой же ссылке.",
+      en: "I'll make the changes and send you the updated version at this same link.",
+    } as L,
+    another: { ru: "Написать ещё", en: "Write more" } as L,
+    failTitle: { ru: "Не получилось отправить", en: "Couldn't send it" } as L,
+    failText: {
+      ru: "Форма сейчас не отвечает. Отправьте отзыв одной кнопкой — текст уже подставлен.",
+      en: "The form isn't responding right now. Send it with one button: the text is already filled in.",
+    } as L,
+    mailSubject: { ru: "Отзыв на превью сайта", en: "Feedback on the site preview" } as L,
+  },
+
+  pricing: {
+    title: { ru: "Стоимость и что дальше", en: "Pricing and next steps" } as L,
+    priceLabel: { ru: "Стоимость", en: "Price" } as L,
+    priceOnCall: {
+      ru: "Назову точную сумму после короткого созвона: она зависит от правок и того, нужны ли запись и оплата на сайте.",
+      en: "I'll give you an exact figure after a short call: it depends on the edits and whether you need booking and payment on the site.",
+    } as L,
+    timelineLabel: { ru: "Сроки", en: "Timeline" } as L,
+    includesLabel: { ru: "Что входит", en: "What's included" } as L,
+    stepsLabel: { ru: "Как дальше", en: "What happens next" } as L,
+    optionsLabel: { ru: "Три варианта", en: "Three options" } as L,
+    choose: { ru: "Выбрать этот вариант", en: "Choose this option" } as L,
+    chooseText: { ru: "Хочу вариант", en: "I'd like the option" } as L,
+    steps: [
+      { ru: "Вы смотрите превью и пишете, что поменять", en: "You look through the preview and tell me what to change" },
+      {
+        ru: "Выбираете вариант — я подтверждаю состав и срок и присылаю счёт",
+        en: "You choose an option; I confirm what's included and the timeline, and send an invoice",
+      },
+      {
+        ru: "После оплаты вношу правки и передаю сайт: файлами или уже на вашем домене",
+        en: "Once it's paid, I make the changes and hand the site over: as files, or live on your domain",
+      },
+    ] as L[],
+    contactLabel: { ru: "Связаться со мной", en: "Get in touch" } as L,
+    telegramCta: { ru: "Написать в Telegram", en: "Message me on Telegram" } as L,
+    telegramText: {
+      ru: "Здравствуйте! Посмотрел(а) превью сайта: ",
+      en: "Hello! I've looked at the site preview: ",
+    } as L,
+  },
 };

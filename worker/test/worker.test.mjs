@@ -132,3 +132,23 @@ test("health says whether the relay key is right", async () => {
 	assert.deepEqual(await health({ "X-Relay-Key": KEY }), { ok: true, relay: true });
 	assert.deepEqual(await health({ "X-Relay-Key": "nope" }), { ok: true, relay: false });
 });
+
+const feedback = { kind: "feedback", work: { id: "k7m2qx", title: "Сайт для Диляры Солей" }, message: "Нравится первый экран, но шрифт мелковат", consent: true };
+
+test("feedback on a preview: message required, name and contact optional", async () => {
+	assert.equal((await post(feedback)).status, 200);
+	const { body } = sent[0];
+	assert.equal(body.subject, "Отзыв на превью: Сайт для Диляры Солей");
+	assert.match(body.text, /Превью: ivanbogush\.ru\/works\/k7m2qx/);
+	assert.match(body.text, /Отзыв:\nНравится первый экран/);
+	assert.ok(!/Имя:|Контакт:/.test(body.text), "empty name and contact rows are left out");
+	assert.equal(body.reply_to, undefined);
+});
+
+test("feedback is refused without a message, consent or a valid work id", async () => {
+	assert.equal((await post({ ...feedback, message: " " })).status, 400);
+	assert.equal((await post({ ...feedback, consent: false })).status, 400);
+	assert.equal((await post({ ...feedback, work: { id: "../../x" } })).status, 400);
+	assert.equal((await post({ ...feedback, work: undefined })).status, 400);
+	assert.equal(sent.length, 0);
+});

@@ -1,11 +1,21 @@
-import { profile } from "@/data/content";
+import type { ReactNode } from "react";
+import { legalLinks, profile } from "@/data/content";
 
 export interface LegalSection {
   title: string;
-  paragraphs: string[];
+  paragraphs: ReactNode[];
 }
 
-/* A plain document page: the privacy policy and the consent text, in Russian only. */
+/* Who the customer deals with, as the offer and the payment page list it. */
+export const requisites: string[] = [
+  `${profile.legalName.ru}, ${profile.taxStatus.ru}`,
+  `ИНН ${profile.inn}`,
+  `Телефон: ${profile.phone}`,
+  `E-mail: ${profile.email} · Telegram: ${profile.telegram}`,
+  "Сайт: ivanbogush.ru",
+];
+
+/* A plain document page: the offer, payment terms, privacy policy and consent text, in Russian only. */
 export default function LegalPage({
   title,
   edition,
@@ -14,7 +24,7 @@ export default function LegalPage({
 }: {
   title: string;
   edition: string;
-  intro: string;
+  intro: ReactNode;
   sections: LegalSection[];
 }) {
   return (
@@ -52,16 +62,25 @@ export default function LegalPage({
         </div>
 
         <div className="flex flex-wrap gap-x-7 gap-y-3 border-t border-line pt-6 text-[15px]">
-          <a href="/privacy" className="link">
-            Политика обработки данных
-          </a>
+          {legalLinks.map((item) => (
+            <a key={item.href} href={item.href} className="link">
+              {item.label.ru}
+            </a>
+          ))}
           <a href="/consent" className="link">
             Согласие на обработку
           </a>
-          <a href={`mailto:${profile.email}`} className="link">
+        </div>
+        <p className="mt-5 text-[14px] leading-[1.6] text-muted">
+          {profile.legalName.ru}, {profile.taxStatus.ru} · ИНН {profile.inn} ·{" "}
+          <a href={profile.phoneHref} className="whitespace-nowrap hover:text-ink">
+            {profile.phone}
+          </a>{" "}
+          ·{" "}
+          <a href={`mailto:${profile.email}`} className="hover:text-ink">
             {profile.email}
           </a>
-        </div>
+        </p>
       </main>
     </>
   );
