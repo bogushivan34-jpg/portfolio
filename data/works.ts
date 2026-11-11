@@ -7,8 +7,10 @@ import type { L, Pricing } from "./content";
  */
 
 /*
- * Why this client needs this site, told to them in their own language: read beside the site, or after it.
- * Written from what their site and channels actually show (peoplebrands/AGENTS.md, "The story").
+ * A short note to the client on what the site was built to do for them, in their own language: read beside the
+ * site, or after it. For a first contact it is two or three points and under 120 words, with no `seen` facts or
+ * `sources`: those belong to the full version, written only for a client already talking to Ivan
+ * (peoplebrands/AGENTS.md, "The story"; scripts/add-work.mjs enforces the length).
  */
 export interface Story {
   /** the line on the small invitation that appears once they've looked around; a default is used without it */

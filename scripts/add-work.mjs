@@ -5,6 +5,7 @@
  *   node scripts/add-work.mjs <client>                 e.g. disoley.ru  (the folder in ../peoplebrands)
  *   node scripts/add-work.mjs <client> --id k7m2qx     pick the id yourself
  *   node scripts/add-work.mjs <client> --placeholders  stand-in pictures for missing images (local testing only)
+ *   node scripts/add-work.mjs <client> --full          allow the long story (a client already talking to Ivan)
  *
  * It builds ../peoplebrands/<client>/app with that site's own Vite config, except as normal files instead of one
  * inlined HTML (vite-plugin-singlefile is left out): pictures stay separate files, so git keeps each one once however
@@ -30,6 +31,7 @@ const args = process.argv.slice(2);
 const client = args.find((a) => !a.startsWith("--") && args[args.indexOf(a) - 1] !== "--id");
 const wantedId = args.includes("--id") ? args[args.indexOf("--id") + 1] : undefined;
 const placeholders = args.includes("--placeholders");
+const full = args.includes("--full");
 const fail = (msg) => {
   console.error(`\n!! ${msg}`);
   process.exit(1);
@@ -149,6 +151,18 @@ if (existsSync(about)) {
     if (!Array.isArray(s.chapters) || !s.chapters.length) problems.push('"story" needs "chapters"');
     for (const [i, c] of (s.chapters ?? []).entries()) {
       if (!c.title || !Array.isArray(c.text) || !c.text.length) problems.push(`story chapter ${i + 1} needs a "title" and "text" (a list of paragraphs)`);
+    }
+    // A first note to someone who hasn't asked for anything is short: a long, detailed story reads as a
+    // machine's sales pitch (peoplebrands/AGENTS.md, step 7). --full is for a client already talking to Ivan.
+    if (!full && !problems.length) {
+      const words = [s.title, ...s.lead, ...s.chapters.flatMap((c) => [c.title, ...c.text]), s.closing?.title ?? "", ...(s.closing?.text ?? [])]
+        .join(" ")
+        .split(/\s+/)
+        .filter(Boolean).length;
+      if (words > 150) problems.push(`the story is ${words} words: keep it under 120 (150 at most)`);
+      if (s.chapters.length > 3) problems.push(`the story has ${s.chapters.length} chapters: keep two or three`);
+      if (s.sources?.length || s.chapters.some((c) => c.seen)) problems.push('drop "seen" and "sources": the short story shows no statistics');
+      if (problems.length) problems.push("(the full version is published with --full, only when Ivan asks for it)");
     }
   }
   if (problems.length) fail(`${client}/work.json: ${problems.join("; ")}`);

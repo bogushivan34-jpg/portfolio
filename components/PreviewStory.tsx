@@ -6,7 +6,9 @@ import type { Story } from "@/data/works";
 import type { PanelTab } from "@/components/PreviewPanel";
 
 /*
- * The story tab: why this client needs this site, in chapters. Each chapter can point at a part of the site:
+ * The story tab: a short note on what the site was built to do for this client, in two or three points (a full
+ * version, for a client already in talks, has more chapters with a "seen" fact each). A chapter can point at a
+ * part of the site:
  * as the client scrolls the site, the chapter about what they're looking at is marked and brought into view,
  * and "show on the site" scrolls the site to it.
  */
@@ -52,7 +54,7 @@ export default function PreviewStory({
         ))}
       </div>
 
-      <ol ref={list} className="mt-9 space-y-9">
+      <ol ref={list} className="mt-7 space-y-6">
         {story.chapters.map((c, i) => {
           const on = !!c.anchor && c.anchor === active;
           return (
@@ -61,8 +63,10 @@ export default function PreviewStory({
               data-anchor={c.anchor}
               className={`scroll-my-4 border-l-2 pl-4 transition-colors duration-300 ${on ? "border-accent" : "border-line"}`}
             >
-              <p className="num text-[13px] text-accent">{String(i + 1).padStart(2, "0")}</p>
-              <h3 className="mt-1 text-[19px] font-semibold leading-snug text-ink">{c.title}</h3>
+              <h3 className="text-[19px] font-semibold leading-snug text-ink">
+                <span className="num mr-2.5 text-[13px] text-accent">{String(i + 1).padStart(2, "0")}</span>
+                {c.title}
+              </h3>
               <div className="mt-2 space-y-3 text-[16px] leading-[1.6]">
                 {c.text.map((p, j) => (
                   <p key={j}>{p}</p>
@@ -92,7 +96,7 @@ export default function PreviewStory({
       </ol>
 
       {story.closing && (
-        <div className="mt-10 border-t border-line pt-7">
+        <div className="mt-8 border-t border-line pt-6">
           <h3 className="text-[19px] font-semibold leading-snug text-ink">{story.closing.title}</h3>
           <div className="mt-2 space-y-3 text-[16px] leading-[1.6]">
             {story.closing.text.map((p, i) => (
