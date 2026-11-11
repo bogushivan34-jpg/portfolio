@@ -44,7 +44,7 @@ export default function Contact({ lang }: { lang: Lang }) {
 
         <div className="mt-14 border-t border-white/20 pt-6 text-[13px] leading-[1.5] text-white/60">
           <p>
-            © {new Date().getFullYear()} {profile.name[lang]} · {profile.location[lang]} ·{" "}
+            © {new Date().getFullYear()} {profile.name[lang]} · {lang === "ru" ? "ИНН" : "INN"} 673207647506 · {profile.location[lang]} ·{" "}
             <a href="/privacy" className="underline underline-offset-2 hover:text-white">
               {lang === "ru" ? "Политика обработки данных" : "Privacy policy"}
             </a>
