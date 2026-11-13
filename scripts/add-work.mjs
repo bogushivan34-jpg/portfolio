@@ -182,6 +182,6 @@ const sizeOf = (dir) =>
   }, 0);
 const mb = (sizeOf(outDir) / 1024 / 1024).toFixed(2);
 console.log(`\nok  ${client}: ${mb} MB in public/previews/${id}/`);
-console.log(`    preview: /works/${id}`);
+console.log(`    preview: /works/${id}/   (all previews: /works/)`);
 console.log(`    ${told}`);
 if (placeholders) console.log("\n!!  Built with stand-in pictures for missing images. Don't publish this: add the images and run it again.");

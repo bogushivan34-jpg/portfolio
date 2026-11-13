@@ -27,6 +27,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+        env:
+          # locks the list of previews at /works (app/works/page.tsx). Without it the page says the list isn't built.
+          # Set in repo Settings → Secrets and variables → Actions; the same value is in .env.local.
+          WORKS_TOKEN: ${{ secrets.WORKS_TOKEN }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: out
