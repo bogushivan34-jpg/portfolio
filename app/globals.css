@@ -62,8 +62,22 @@
     @apply font-medium text-accent underline decoration-accent/30 underline-offset-4 transition-colors hover:decoration-accent;
   }
 
+  /* A note or card on a client's preview coming in: a short fade, and nothing when motion is reduced */
+  @media (prefers-reduced-motion: no-preference) {
+    .note-in {
+      animation: note-in 180ms ease-out;
+    }
+  }
+
   .num {
     @apply font-semibold tracking-[-0.02em] text-ink;
     font-variant-numeric: tabular-nums;
+  }
+}
+
+@keyframes note-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
   }
 }

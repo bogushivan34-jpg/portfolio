@@ -603,7 +603,7 @@ export const services = {
 };
 
 /*
- * Prices for a site: shown on the main page (#prices) and in the panel of a client's preview (/works/<id>).
+ * Prices for a site: shown on the main page (#prices) and in the pricing window of a client's preview (/works/<id>).
  * PROVISIONAL: Ivan gave these on 11 November 2026 as "not a final version". Change them here and nowhere else:
  * the offer (/oferta) and the payment page (/payment) point at this list instead of repeating the figures.
  */
@@ -819,7 +819,7 @@ export const form = {
 
 /*
  * The preview page for a client's site concept: ivanbogush.ru/works/<id> (app/works/[id], data/works.json).
- * The pricing tab shows the three options from `prices` above. A work's own `pricing` in data/works.json
+ * The pricing window shows the three options from `prices` above. A work's own `pricing` in data/works.json
  * (a price agreed for that client) replaces them.
  */
 export interface Pricing {
@@ -830,32 +830,38 @@ export interface Pricing {
 }
 
 export const preview = {
-  label: { ru: "Концепция сайта", en: "Website concept" } as L,
-  desktop: { ru: "Компьютер", en: "Desktop" } as L,
-  phone: { ru: "Телефон", en: "Phone" } as L,
-  openSeparately: { ru: "Открыть отдельно", en: "Open on its own" } as L,
-  storyButton: { ru: "Идея сайта", en: "The idea" } as L,
-  storyShort: { ru: "Идея", en: "Idea" } as L,
-  feedbackButton: { ru: "Оставить отзыв", en: "Leave feedback" } as L,
-  feedbackShort: { ru: "Отзыв", en: "Feedback" } as L,
-  pricingButton: { ru: "Стоимость и контакты", en: "Pricing and contacts" } as L,
-  pricingShort: { ru: "Цена", en: "Pricing" } as L,
+  frameTitle: { ru: "Превью сайта", en: "Site preview" } as L,
   close: { ru: "Закрыть", en: "Close" } as L,
 
-  /* The story tab: why this client needs this site. The story itself is in the work (data/works.json). */
-  story: {
-    label: { ru: "Идея сайта", en: "The idea behind the site" } as L,
-    minutes: { ru: "мин чтения", en: "min read" } as L,
+  /* Ivan's photo in the corner of the site, and the short menu it opens */
+  menu: {
+    open: { ru: "Иван Богуш: заметки, отзыв, стоимость", en: "Ivan Bogush: notes, feedback, pricing" } as L,
+    notes: { ru: "Заметки к сайту", en: "Notes on the site" } as L,
+    feedback: { ru: "Написать, что поправить", en: "Tell me what to change" } as L,
+    pricing: { ru: "Стоимость и что дальше", en: "Pricing and next steps" } as L,
+    home: { ru: "Обо мне и другие работы", en: "About me and other work" } as L,
+  },
+
+  /* The story as small notes beside the photo. The story itself is in the work (data/works.json). */
+  notes: {
+    note: { ru: "Заметка", en: "Note" } as L,
+    of: { ru: "из", en: "of" } as L,
+    prev: { ru: "Предыдущая заметка", en: "Previous note" } as L,
+    next: { ru: "Следующая заметка", en: "Next note" } as L,
+    hide: { ru: "Скрыть заметку", en: "Hide the note" } as L,
+    fold: { ru: "Свернуть в строку", en: "Fold into one line" } as L,
+    unfold: { ru: "Развернуть заметку", en: "Open the note" } as L,
     seen: { ru: "Что я увидел", en: "What I saw" } as L,
-    show: { ru: "Показать на сайте", en: "Show on the site" } as L,
     sources: { ru: "На что я опирался", en: "What this is based on" } as L,
     toFeedback: { ru: "Написать, что думаете", en: "Tell me what you think" } as L,
-    toPricing: { ru: "Стоимость и что дальше", en: "Pricing and next steps" } as L,
-    nudge: { ru: "Почему сайт именно такой? Короткая история", en: "Why the site looks like this: a short story" } as L,
-    nudgeRead: { ru: "Читать", en: "Read" } as L,
-    nudgeClose: { ru: "Скрыть", en: "Hide" } as L,
+    toPricing: { ru: "Стоимость", en: "Pricing" } as L,
+    /* the closing note of a work without a story of its own */
+    endTitle: { ru: "Что скажете?", en: "What do you think?" } as L,
+    endText: {
+      ru: "Напишите, что поменять, — внесу правки и пришлю по этой же ссылке.",
+      en: "Tell me what to change: I'll make the edits and send them at this same link.",
+    } as L,
   },
-  frameTitle: { ru: "Превью сайта", en: "Site preview" } as L,
   placeholders: {
     ru: "Черновик: часть фотографий пока заменена заглушками.",
     en: "Draft: some photos are placeholders for now.",
@@ -865,7 +871,7 @@ export const preview = {
     title: { ru: "Что скажете?", en: "What do you think?" } as L,
     lead: {
       ru: "Напишите, что нравится и что поменять: тексты, цвета, порядок блоков, что угодно. Можно писать прямо по ходу просмотра — окно не мешает листать сайт.",
-      en: "Tell me what you like and what to change: copy, colours, the order of sections, anything. Write as you browse: this panel doesn't block the site.",
+      en: "Tell me what you like and what to change: copy, colours, the order of sections, anything. Write as you browse: this window doesn't block the site.",
     } as L,
     message: { ru: "Ваш отзыв", en: "Your feedback" } as L,
     messageHint: {

@@ -1,69 +1,83 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import PreviewPanel, { type PanelTab } from "@/components/PreviewPanel";
+import PreviewNote, { END, TOP, buildNotes } from "@/components/PreviewNote";
+import PreviewPopup, { type PopupView } from "@/components/PreviewPopup";
 import { Lang, preview as t, profile } from "@/data/content";
 import type { Work } from "@/data/works";
 import { currentAnchor, findAnchor } from "@/lib/siteFrame";
 
-type Device = "desktop" | "phone";
-
-/** Beside the docked panel the site keeps the layout it had, up to this width, and is scaled down to fit. */
-const SITE_WIDTH = 1280;
+/** How long the client stays on a part of the site before its note comes up, so a fast scroll doesn't flash them. */
+const SETTLE_MS = 450;
+/** The first note waits until the site has been seen for a moment. */
+const FIRST_MS = 2500;
+/** The closing note waits a little at the end of the site, so the last chapter's note can be read. */
+const END_MS = 1500;
+/** After the client steps to a note, the site scrolls there: the notes it passes on the way are skipped. */
+const STEP_QUIET_MS = 1200;
 
 /*
- * A client's site concept inside the portfolio. The site comes first: it fills the page the moment the link
- * opens, with nothing in front of it. Above it sits a slim bar; the story, feedback and pricing wait in a side
- * panel the client opens when they want it. On a computer the panel docks beside the site, so the story can be
- * read along with it: the page follows which part of the site is in view.
+ * A client's site concept inside the portfolio. The site is the page: it fills the whole window, with no bar or
+ * frame around it. What Ivan has to say comes as small notes in the bottom-right corner, beside his photo, one at
+ * a time: the note about the part of the site in view, changing as the client scrolls. The photo opens a short
+ * menu: the notes again, feedback and pricing, each in a small card over the corner.
  */
 export default function WorkPreview({ work }: { work: Work }) {
   const [lang, setLang] = useState<Lang>("ru");
-  const [device, setDevice] = useState<Device>("desktop");
-  const [panel, setPanel] = useState<PanelTab | null>(null);
-  const [wide, setWide] = useState(false); // ≥ 1024px: the panel docks beside the site
-  const [area, setArea] = useState({ w: 0, h: 0, full: 0 });
-  const [activeAnchor, setActiveAnchor] = useState<string | null>(null);
-  const [nudge, setNudge] = useState<"waiting" | "shown" | "gone">("waiting");
+  const [open, setOpen] = useState<PopupView | "menu" | null>(null);
+  const [place, setPlace] = useState<{ anchor: string | null; end: boolean }>({ anchor: null, end: false });
+  const [shown, setShown] = useState<string | null>(null); // the note in the corner
+  const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set()); // notes the client closed
+  // notes folded into one line: the client's choice, kept from note to note; on a phone they start folded
+  const [folded, setFolded] = useState(false);
 
   const frame = useRef<HTMLIFrameElement>(null);
-  const siteArea = useRef<HTMLDivElement>(null);
-  const opener = useRef<HTMLButtonElement | null>(null);
-  const scrollMemory = useRef<Partial<Record<PanelTab, number>>>({});
+  const launcher = useRef<HTMLButtonElement>(null);
+  const menu = useRef<HTMLDivElement>(null);
+  const firstNote = useRef(true);
+  const quietUntil = useRef(0);
 
-  const story = work.story;
-  const anchors = useMemo(() => (story?.chapters ?? []).map((c) => c.anchor).filter((a): a is string => !!a), [story]);
+  const notes = useMemo(() => buildNotes(work, lang), [work, lang]);
+  const anchors = useMemo(() => notes.map((n) => n.anchor).filter((a): a is string => !!a), [notes]);
   const src = `/previews/${work.id}/index.html`;
-  const nudgeKey = `work-story-${work.id}`;
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("lang") === "en") setLang("en");
-    try {
-      if (sessionStorage.getItem(nudgeKey)) setNudge("gone");
-    } catch {
-      /* private mode: the invitation just shows again next time */
-    }
-  }, [nudgeKey]);
+    setFolded(window.matchMedia("(max-width: 639px)").matches);
+  }, []);
   useEffect(() => {
     document.documentElement.lang = lang;
   }, [lang]);
 
-  // the room the site has
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const onMq = () => setWide(mq.matches);
-    onMq();
-    mq.addEventListener("change", onMq);
-    const el = siteArea.current!;
-    const ro = new ResizeObserver(() => setArea({ w: el.clientWidth, h: el.clientHeight, full: window.innerWidth }));
-    ro.observe(el);
-    return () => {
-      mq.removeEventListener("change", onMq);
-      ro.disconnect();
-    };
+  const openRef = useRef(open);
+  openRef.current = open;
+
+  const close = useCallback(() => {
+    setOpen(null);
+    launcher.current?.focus({ preventScroll: true });
   }, []);
 
-  // follow the site's scroll: which story chapter it's at, and whether the client has looked around
+  // Esc closes the menu or card, wherever the focus is: on this page or inside the site
+  const onKey = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape" && openRef.current) close();
+  }, [close]);
+  useEffect(() => {
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onKey]);
+
+  // a click anywhere else, the site included, closes the menu (never the feedback card: a half-written note stays)
+  useEffect(() => {
+    if (open !== "menu") return;
+    const onDown = (e: PointerEvent) => {
+      const target = e.target as Node;
+      if (!menu.current?.contains(target) && !launcher.current?.contains(target)) setOpen(null);
+    };
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
+  }, [open]);
+
+  // follow the site's scroll: which part of it is in view, and whether the client has reached the end
   useEffect(() => {
     const el = frame.current;
     if (!el) return;
@@ -76,22 +90,30 @@ export default function WorkPreview({ work }: { work: Work }) {
         doc = el.contentDocument!;
         if (!doc?.body || win.location.href === "about:blank") return;
       } catch {
-        return; // not our own page: no read-along
+        return; // not our own page: no notes that follow it
       }
       let raf = 0;
       const measure = () => {
         raf = 0;
         const max = doc.documentElement.scrollHeight - win.innerHeight;
-        if (max > 0 && win.scrollY / max > 0.3) setNudge((n) => (n === "waiting" ? "shown" : n));
-        if (anchors.length) setActiveAnchor(currentAnchor(win, doc, anchors));
+        const end = max > 0 && win.scrollY >= max - 4;
+        const anchor = anchors.length ? currentAnchor(win, doc, anchors) : null;
+        setPlace((p) => (p.end === end && p.anchor === anchor ? p : { anchor, end }));
       };
       const onScroll = () => {
         if (!raf) raf = win.requestAnimationFrame(measure);
       };
+      const onDown = () => openRef.current === "menu" && setOpen(null);
       win.addEventListener("scroll", onScroll, { passive: true });
+      win.addEventListener("resize", onScroll);
+      win.addEventListener("pointerdown", onDown);
+      win.addEventListener("keydown", onKey);
       measure();
       detach = () => {
         win.removeEventListener("scroll", onScroll);
+        win.removeEventListener("resize", onScroll);
+        win.removeEventListener("pointerdown", onDown);
+        win.removeEventListener("keydown", onKey);
         if (raf) win.cancelAnimationFrame(raf);
       };
     };
@@ -101,179 +123,157 @@ export default function WorkPreview({ work }: { work: Work }) {
       el.removeEventListener("load", attach);
       detach();
     };
-  }, [anchors]);
+  }, [anchors, onKey]);
 
-  // the invitation to the story also appears after a while, for those who read slowly at the top
+  // the note the site's position calls for: the closing one at the end, a chapter's in its part, else the lead
+  const placed = useMemo(() => {
+    if (place.end) return "end";
+    const chapter = place.anchor ? notes.find((n) => n.anchor === place.anchor) : undefined;
+    if (chapter) return chapter.key;
+    return notes[0].key === "lead" ? "lead" : null;
+  }, [place, notes]);
+
   useEffect(() => {
-    const timer = setTimeout(() => setNudge((n) => (n === "waiting" ? "shown" : n)), 40_000);
+    const wait = firstNote.current ? FIRST_MS : placed === "end" ? END_MS : SETTLE_MS;
+    const timer = setTimeout(
+      () => {
+        if (Date.now() < quietUntil.current) return; // the site is still scrolling to a note the client chose
+        firstNote.current = false;
+        setShown(placed);
+      },
+      Math.max(wait, quietUntil.current - Date.now()),
+    );
     return () => clearTimeout(timer);
-  }, []);
-  const dismissNudge = useCallback(() => {
-    setNudge("gone");
+  }, [placed]);
+
+  const scrollSite = useCallback((to: string) => {
     try {
-      sessionStorage.setItem(nudgeKey, "1");
+      const win = frame.current?.contentWindow;
+      const doc = frame.current?.contentDocument;
+      if (!win || !doc) return;
+      const behavior: ScrollBehavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+      if (to === TOP) win.scrollTo({ top: 0, behavior });
+      else if (to === END) win.scrollTo({ top: doc.documentElement.scrollHeight, behavior });
+      else findAnchor(doc, to)?.scrollIntoView({ behavior, block: "start" });
     } catch {
-      /* ignore */
+      /* not our own page */
     }
-  }, [nudgeKey]);
-
-  const openPanel = (tab: PanelTab) => (e: React.MouseEvent<HTMLButtonElement>) => {
-    opener.current = e.currentTarget;
-    if (tab === "story") dismissNudge();
-    setPanel((p) => (p === tab ? null : tab));
-  };
-  const closePanel = useCallback(() => {
-    setPanel(null);
-    opener.current?.focus();
   }, []);
-  const showOnSite = useCallback(
-    (anchor: string) => {
-      try {
-        const doc = frame.current?.contentDocument;
-        if (doc) findAnchor(doc, anchor)?.scrollIntoView({ behavior: "smooth", block: "start" });
-      } catch {
-        /* ignore */
-      }
-      if (!wide) setPanel(null); // the panel covers the site on a small screen: step aside
-    },
-    [wide],
-  );
 
-  // Docked beside the panel, the site keeps its desktop layout and is scaled down to fit.
-  const docked = wide && panel !== null;
-  const scaled = useMemo(() => {
-    if (!docked || device !== "desktop" || !area.w) return null;
-    const layout = Math.min(area.full, SITE_WIDTH);
-    if (area.w >= layout) return null;
-    const scale = area.w / layout;
-    return { width: layout, height: area.h / scale, transform: `scale(${scale})`, transformOrigin: "0 0" } as const;
-  }, [docked, device, area]);
+  const step = (index: number) => {
+    const note = notes[index];
+    if (!note) return;
+    quietUntil.current = Date.now() + STEP_QUIET_MS;
+    firstNote.current = false;
+    setShown(note.key);
+    setHidden((h) => {
+      if (!h.has(note.key)) return h;
+      const rest = new Set(h);
+      rest.delete(note.key);
+      return rest;
+    });
+    if (note.to) scrollSite(note.to);
+  };
 
-  const barButton = (tab: PanelTab, long: string, short: string, primary = false) => (
-    <button
-      type="button"
-      onClick={openPanel(tab)}
-      aria-expanded={panel === tab}
-      className={
-        primary
-          ? "rounded-lg bg-ink px-3 py-2 text-[14px] font-medium text-white transition-colors hover:bg-accent"
-          : `rounded-lg border px-3 py-2 text-[14px] font-medium transition-colors ${
-              panel === tab ? "border-accent bg-accentSoft text-accent" : "border-line text-ink hover:border-muted"
-            }`
-      }
-    >
-      <span className="hidden md:inline">{long}</span>
-      <span className="md:hidden">{short}</span>
-    </button>
-  );
+  const hide = (key: string) => setHidden((h) => new Set(h).add(key));
+
+  const showNotes = () => {
+    setOpen(null);
+    setHidden(new Set());
+    setFolded(false);
+    firstNote.current = false;
+    setShown((s) => s ?? placed ?? notes[0].key);
+  };
+
+  const index = shown ? notes.findIndex((n) => n.key === shown) : -1;
+  const note = index >= 0 && !hidden.has(notes[index].key) && !open ? notes[index] : null;
+
+  const menuItem =
+    "block w-full rounded-lg px-3 py-2.5 text-left text-[15px] text-ink transition-colors hover:bg-paper focus-visible:bg-paper";
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-paper">
-      <header className="relative z-20 flex h-14 shrink-0 items-center gap-3 border-b border-line bg-white px-3 sm:px-5">
-        <a href="/" className="shrink-0 text-[15px] font-semibold text-ink">
-          {profile.name[lang]}
-        </a>
-        <span aria-hidden="true" className="hidden text-line lg:inline">
-          /
-        </span>
-        <p className="hidden min-w-0 truncate text-[15px] text-muted lg:block" title={work.title[lang]}>
-          {work.title[lang]}
-        </p>
+    <div className="fixed inset-0 bg-white">
+      <iframe
+        ref={frame}
+        src={src}
+        title={`${t.frameTitle[lang]}: ${work.title[lang]}`}
+        className="block h-full w-full border-0 bg-white"
+      />
 
-        <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
-          <div
-            role="group"
-            aria-label={`${t.desktop[lang]} / ${t.phone[lang]}`}
-            className="hidden rounded-lg border border-line p-0.5 xl:flex"
-          >
-            {(["desktop", "phone"] as Device[]).map((d) => (
-              <button
-                key={d}
-                type="button"
-                aria-pressed={device === d}
-                onClick={() => setDevice(d)}
-                className={`rounded-md px-3 py-1.5 text-[14px] transition-colors ${
-                  device === d ? "bg-paper font-medium text-ink" : "text-muted hover:text-ink"
-                }`}
-              >
-                {d === "desktop" ? t.desktop[lang] : t.phone[lang]}
-              </button>
-            ))}
-          </div>
-
-          <a
-            href={src}
-            target="_blank"
-            rel="noopener"
-            className="hidden px-2 text-[14px] text-muted transition-colors hover:text-ink 2xl:inline"
-          >
-            {t.openSeparately[lang]} ↗
-          </a>
-
-          {story && barButton("story", t.storyButton[lang], t.storyShort[lang])}
-          {barButton("feedback", t.feedbackButton[lang], t.feedbackShort[lang])}
-          {barButton("pricing", t.pricingButton[lang], t.pricingShort[lang], true)}
-        </div>
-      </header>
-
-      {work.placeholders && (
-        <p className="shrink-0 border-b border-line bg-accentSoft px-4 py-1.5 text-center text-[13px] text-accent">
-          {t.placeholders[lang]}
-        </p>
-      )}
-
-      <main className="relative flex min-h-0 flex-1">
-        <div ref={siteArea} className="relative flex min-w-0 flex-1 justify-center overflow-hidden">
-          <iframe
-            ref={frame}
-            src={src}
-            title={`${t.frameTitle[lang]}: ${work.title[lang]}`}
-            style={scaled ?? undefined}
-            className={
-              device === "phone"
-                ? "my-5 h-[calc(100%-40px)] max-h-[860px] w-[390px] rounded-[28px] border-[6px] border-ink bg-white shadow-[0_20px_60px_rgba(21,23,26,0.18)]"
-                : scaled
-                  ? "absolute left-0 top-0 max-w-none bg-white"
-                  : "h-full w-full bg-white"
-            }
-          />
-
-          {/* The invitation to the story: after they've looked around, never in front of the site */}
-          {story && nudge === "shown" && panel === null && (
-            <div className="absolute inset-x-3 bottom-3 z-10 flex items-center gap-3 rounded-xl border border-line bg-white py-2.5 pl-4 pr-2 shadow-[0_10px_30px_rgba(21,23,26,0.16)] sm:inset-x-auto sm:left-4 sm:bottom-4 sm:max-w-[420px]">
-              <p className="min-w-0 flex-1 text-[15px] leading-snug text-ink">{story.nudge ?? t.story.nudge[lang]}</p>
-              <button
-                type="button"
-                onClick={openPanel("story")}
-                className="shrink-0 rounded-lg bg-ink px-3 py-2 text-[14px] font-medium text-white transition-colors hover:bg-accent"
-              >
-                {t.story.nudgeRead[lang]}
-              </button>
-              <button
-                type="button"
-                onClick={dismissNudge}
-                aria-label={t.story.nudgeClose[lang]}
-                className="shrink-0 rounded-md px-2 py-2 text-[14px] text-muted transition-colors hover:text-ink"
-              >
-                ✕
-              </button>
-            </div>
+      {/* the corner: the note in view and Ivan's photo; everything else on the screen is the site */}
+      <div className="pointer-events-none fixed inset-x-3 bottom-3 z-20 flex items-end justify-end gap-2.5 sm:inset-x-auto sm:bottom-5 sm:right-5">
+        {/* stays in place while notes come and go, so a screen reader reads each new one */}
+        <div aria-live="polite" className="flex min-w-0 flex-1 justify-end sm:flex-none">
+          {note && (
+            <PreviewNote
+              key={note.key}
+              note={note}
+              index={index}
+              count={notes.length}
+              lang={lang}
+              collapsed={folded}
+              onToggle={() => setFolded((f) => !f)}
+              onStep={step}
+              onHide={() => hide(note.key)}
+              onFeedback={() => setOpen("feedback")}
+              onPricing={() => setOpen("pricing")}
+            />
           )}
         </div>
 
-        {panel && (
-          <PreviewPanel
-            work={work}
-            lang={lang}
-            tab={panel}
-            onTab={setPanel}
-            onClose={closePanel}
-            activeAnchor={activeAnchor}
-            onShow={showOnSite}
-            scrollMemory={scrollMemory}
-          />
-        )}
-      </main>
+        <button
+          ref={launcher}
+          type="button"
+          onClick={() => setOpen((o) => (o ? null : "menu"))}
+          aria-label={t.menu.open[lang]}
+          title={t.menu.open[lang]}
+          aria-expanded={open !== null}
+          className="pointer-events-auto relative h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-white bg-paper shadow-[0_6px_20px_rgba(21,23,26,0.25)]"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/ivan_bogush_avatar.jpg" alt="" width={48} height={48} className="h-full w-full object-cover" />
+          {open && (
+            <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center bg-ink/70 text-[16px] text-white">
+              ✕
+            </span>
+          )}
+        </button>
+      </div>
+
+      {open === "menu" && (
+        <div
+          ref={menu}
+          role="group"
+          aria-label={t.menu.open[lang]}
+          className="note-in fixed bottom-[72px] right-3 z-30 w-[min(300px,calc(100vw-24px))] rounded-2xl border border-line bg-white p-1.5 shadow-[0_12px_40px_rgba(21,23,26,0.2)] sm:bottom-[84px] sm:right-5"
+        >
+          <div className="px-3 pb-2 pt-2">
+            <p className="text-[15px] font-semibold leading-snug text-ink">{profile.name[lang]}</p>
+            <p className="mt-0.5 text-[13px] leading-snug text-muted">{work.title[lang]}</p>
+          </div>
+          {work.story && (
+            <button type="button" autoFocus onClick={showNotes} className={menuItem}>
+              {t.menu.notes[lang]}
+            </button>
+          )}
+          <button type="button" autoFocus={!work.story} onClick={() => setOpen("feedback")} className={menuItem}>
+            {t.menu.feedback[lang]}
+          </button>
+          <button type="button" onClick={() => setOpen("pricing")} className={menuItem}>
+            {t.menu.pricing[lang]}
+          </button>
+          <a href="/" target="_blank" rel="noopener" className={`${menuItem} text-muted`}>
+            {t.menu.home[lang]} ↗
+          </a>
+          {work.placeholders && (
+            <p className="mx-3 mb-1.5 mt-1 border-t border-line pt-2.5 text-[12.5px] leading-[1.45] text-muted">
+              {t.placeholders[lang]}
+            </p>
+          )}
+        </div>
+      )}
+
+      {(open === "feedback" || open === "pricing") && <PreviewPopup work={work} lang={lang} view={open} onClose={close} />}
     </div>
   );
 }

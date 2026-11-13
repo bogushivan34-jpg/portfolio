@@ -1,105 +1,64 @@
 "use client";
 
-import { useEffect, useRef, useState, type MutableRefObject } from "react";
-import PreviewStory from "@/components/PreviewStory";
+import { useEffect, useRef, useState } from "react";
 import { Lang, form, formatPrice, legalLinks, preview as t, prices, profile } from "@/data/content";
 import type { Work } from "@/data/works";
 import { submitForm } from "@/lib/submit";
 
-export type PanelTab = "story" | "feedback" | "pricing";
+export type PopupView = "feedback" | "pricing";
 type Status = "idle" | "sending" | "sent" | "failed";
 
 const fieldClass =
   "mt-1.5 w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-[16px] text-ink placeholder:text-muted/70 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20";
 
 /*
- * The side panel on a preview. On a computer it docks beside the site, which stays whole and scrollable (the
- * page scales it to fit); on a tablet it's a drawer over the right edge, on a phone a sheet from the bottom.
+ * Feedback or pricing, in a card that opens above Ivan's photo in the corner only when the client asks for it.
+ * The site stays the page behind it: on a computer it can be scrolled while the card is open, so the client can
+ * write as they look. It closes with ✕, Esc or the photo, never on a stray click, so a half-written note isn't lost.
  */
-export default function PreviewPanel({
+export default function PreviewPopup({
   work,
   lang,
-  tab,
-  onTab,
+  view,
   onClose,
-  activeAnchor,
-  onShow,
-  scrollMemory,
 }: {
   work: Work;
   lang: Lang;
-  tab: PanelTab;
-  onTab: (tab: PanelTab) => void;
+  view: PopupView;
   onClose: () => void;
-  /** the story anchor of the part of the site in view */
-  activeAnchor: string | null;
-  /** scroll the site to a story anchor */
-  onShow: (anchor: string) => void;
-  /** where each tab was scrolled to, kept by the page so reopening the panel returns to the same place */
-  scrollMemory: MutableRefObject<Partial<Record<PanelTab, number>>>;
 }) {
-  const panel = useRef<HTMLElement>(null);
-  const body = useRef<HTMLDivElement>(null);
+  const card = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    panel.current?.focus({ preventScroll: true });
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+    card.current?.focus({ preventScroll: true });
+  }, [view]);
 
-  useEffect(() => {
-    if (body.current) body.current.scrollTop = scrollMemory.current[tab] ?? 0;
-  }, [tab, scrollMemory]);
-
-  const tabs: PanelTab[] = work.story ? ["story", "feedback", "pricing"] : ["feedback", "pricing"];
-  const tabLabel = { story: t.storyShort, feedback: t.feedbackShort, pricing: t.pricingShort };
-  const title = { story: t.story.label, feedback: t.feedback.title, pricing: t.pricing.title }[tab][lang];
+  const title = { feedback: t.feedback.title, pricing: t.pricing.title }[view][lang];
 
   return (
     <aside
-      ref={panel}
+      ref={card}
       tabIndex={-1}
       role="dialog"
       aria-modal="false"
       aria-label={title}
-      className="absolute inset-x-0 bottom-0 z-10 flex max-h-[85%] flex-col rounded-t-2xl border-t border-line bg-white shadow-[0_-12px_40px_rgba(21,23,26,0.16)] outline-none sm:inset-x-auto sm:right-0 sm:top-0 sm:max-h-none sm:w-[440px] sm:rounded-none sm:border-l sm:border-t-0 sm:shadow-[-12px_0_40px_rgba(21,23,26,0.12)] lg:static lg:w-[400px] lg:shrink-0 lg:shadow-none xl:w-[440px]"
+      className="note-in fixed inset-x-3 bottom-[72px] z-30 flex max-h-[calc(100dvh-84px)] flex-col rounded-2xl border border-line bg-white shadow-[0_12px_40px_rgba(21,23,26,0.2)] outline-none sm:inset-x-auto sm:bottom-[84px] sm:right-5 sm:max-h-[min(720px,calc(100dvh-104px))] sm:w-[400px]"
     >
-      <div className="flex shrink-0 items-center gap-1 border-b border-line px-3 py-2">
-        {tabs.map((name) => (
-          <button
-            key={name}
-            type="button"
-            aria-pressed={tab === name}
-            onClick={() => onTab(name)}
-            className={`rounded-md px-3 py-1.5 text-[14px] transition-colors ${
-              tab === name ? "bg-paper font-medium text-ink" : "text-muted hover:text-ink"
-            }`}
-          >
-            {tabLabel[name][lang]}
-          </button>
-        ))}
+      <div className="flex shrink-0 items-center gap-2 border-b border-line py-2 pl-5 pr-2">
+        <p className="flex-1 text-[16px] font-semibold text-ink">{title}</p>
         <button
           type="button"
           onClick={onClose}
-          className="ml-auto rounded-md px-3 py-1.5 text-[14px] text-muted transition-colors hover:text-ink"
+          aria-label={t.close[lang]}
+          title={t.close[lang]}
+          className="flex h-8 w-8 items-center justify-center rounded-md text-[15px] text-muted transition-colors hover:bg-paper hover:text-ink"
         >
-          {t.close[lang]} ✕
+          ✕
         </button>
       </div>
 
-      <div
-        ref={body}
-        onScroll={(e) => (scrollMemory.current[tab] = e.currentTarget.scrollTop)}
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-6 sm:px-7"
-      >
-        {tab === "story" && work.story ? (
-          <PreviewStory story={work.story} lang={lang} active={activeAnchor} onShow={onShow} onTab={onTab} />
-        ) : tab === "pricing" ? (
-          <PricingInfo work={work} lang={lang} />
-        ) : (
-          <Feedback work={work} lang={lang} />
-        )}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-6 pt-4">
+        {view === "pricing" ? <PricingInfo work={work} lang={lang} /> : <Feedback work={work} lang={lang} />}
       </div>
     </aside>
   );
@@ -187,8 +146,7 @@ function Feedback({ work, lang }: { work: Work; lang: Lang }) {
 
   return (
     <form onSubmit={submit}>
-      <p className="text-[22px] font-semibold leading-tight text-ink">{f.title[lang]}</p>
-      <p className="mt-2 text-[16px] leading-[1.55]">{f.lead[lang]}</p>
+      <p className="text-[16px] leading-[1.55]">{f.lead[lang]}</p>
 
       <label className="mt-6 block text-[15px] font-medium text-ink">
         {f.message[lang]} <span className="text-accent" aria-hidden="true">*</span>
@@ -268,11 +226,9 @@ function PricingInfo({ work, lang }: { work: Work; lang: Lang }) {
 
   return (
     <div>
-      <p className="text-[22px] font-semibold leading-tight text-ink">{p.title[lang]}</p>
-
       {pricing ? (
         <>
-          <div className="mt-6 rounded-xl bg-paper p-5">
+          <div className="rounded-xl bg-paper p-5">
             <p className="label">{p.priceLabel[lang]}</p>
             {pricing.price ? (
               <p className="num mt-2 text-[28px] leading-tight">{pricing.price[lang]}</p>
@@ -292,7 +248,7 @@ function PricingInfo({ work, lang }: { work: Work; lang: Lang }) {
         </>
       ) : (
         <>
-          <p className="label mt-6">{p.optionsLabel[lang]}</p>
+          <p className="label">{p.optionsLabel[lang]}</p>
           <ul className="mt-3 space-y-3">
             {prices.tiers.map((tier) => (
               <li key={tier.id} className="rounded-xl border border-line p-5">
