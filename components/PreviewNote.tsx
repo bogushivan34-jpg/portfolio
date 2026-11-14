@@ -115,9 +115,6 @@ export default function PreviewNote({
           title={n.unfold[lang]}
           className="flex min-w-0 flex-1 items-center gap-2 py-1.5 text-left text-[14px] font-medium text-ink"
         >
-          <span className="num shrink-0 text-[12px] text-accent">
-            {index + 1}/{count}
-          </span>
           <span className="line-clamp-2 min-w-0 flex-1 leading-snug">{note.teaser ?? note.title}</span>
           <span className="shrink-0 text-muted">
             <Icon d={UP} />
@@ -134,9 +131,7 @@ export default function PreviewNote({
       className="note-in pointer-events-auto flex max-h-[min(440px,calc(100dvh-96px))] min-w-0 flex-1 flex-col rounded-2xl border border-line bg-white shadow-[0_8px_28px_rgba(21,23,26,0.16)] sm:w-[320px] sm:flex-none"
     >
       <div className="flex shrink-0 items-center gap-0.5 pl-4 pr-1.5 pt-1.5">
-        <p className="label flex-1 py-1 text-[11px]">
-          {n.note[lang]} {counter}
-        </p>
+        <span aria-hidden="true" className="flex-1" />
         <button
           type="button"
           onClick={() => onStep(index - 1)}

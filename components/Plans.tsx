@@ -207,8 +207,6 @@ function Plan({
           </span>
         </p>
       </div>
-      <p className="mt-1 text-[15px] leading-[1.5] text-muted">{tier.summary[lang]}</p>
-
       <span aria-hidden="true" className="pl-rule mt-4" />
 
       <ul className="mt-4 space-y-3">

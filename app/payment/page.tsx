@@ -9,8 +9,9 @@ export const metadata: Metadata = {
 
 /*
  * Payment and refund terms in plain words; the offer (/oferta) is the full version, keep the two in step.
- * No payment provider is named: none is connected yet. Once the YooKassa shop is approved, name it under
- * "Как оплатить" together with the payment methods it actually gives.
+ * The YooKassa shop is approved (Ivan, 15 November 2026) and named under "Как оплатить". Card and SBP are the
+ * methods the page named before; if the shop gives more, list them here, in the offer and in the pricing card
+ * of the previews (`preview.pricing.official` in data/content.ts).
  */
 export default function PaymentPage() {
   const link = (href: string, text: string) => (
@@ -22,7 +23,7 @@ export default function PaymentPage() {
   return (
     <LegalPage
       title="Оплата и возврат"
-      edition="Редакция от 11 ноября 2026 г."
+      edition="Редакция от 15 ноября 2026 г."
       intro={
         <>
           Коротко о том, как оплатить заказ, как вы получаете результат и как вернуть деньги. Полные условия — в{" "}
@@ -44,15 +45,15 @@ export default function PaymentPage() {
         {
           title: "Как оплатить",
           paragraphs: [
-            "После заявки я подтверждаю состав заказа, цену и срок и присылаю счёт или ссылку на оплату.",
-            "Оплатить можно банковской картой или через Систему быстрых платежей (СБП).",
+            "После заявки я подтверждаю состав заказа, цену и срок и присылаю ссылку на оплату.",
+            "Платёж принимает сервис ЮKassa: оплатить можно банковской картой или через Систему быстрых платежей (СБП).",
             "Заказ оплачивается полностью до начала работ, если мы не договорились об оплате частями.",
           ],
         },
         {
           title: "Безопасность оплаты",
           paragraphs: [
-            "Данные карты вы вводите на защищённой странице банка или платёжного сервиса. Я их не получаю и не храню.",
+            "Данные карты вы вводите на защищённой странице ЮKassa. Я их не получаю и не храню.",
           ],
         },
         {

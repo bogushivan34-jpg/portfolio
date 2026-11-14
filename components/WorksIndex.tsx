@@ -14,6 +14,8 @@ export interface IndexEntry {
   story: boolean;
   pricing: boolean;
   placeholders: boolean;
+  /** opens on an intro screen, which this browser skips after the first visit */
+  intro: boolean;
 }
 
 /** where this browser keeps the token once it has opened the list (the previews read it too: lib/track.ts) */
@@ -218,6 +220,11 @@ export default function WorksIndex({ locked }: { locked: Locked | null }) {
                     <button type="button" onClick={() => copy(e.id)} className="text-muted transition-colors hover:text-ink">
                       {copied === e.id ? "Скопировано" : "Скопировать ссылку"}
                     </button>
+                    {e.intro && (
+                      <a href={`/works/${e.id}/?intro`} target="_blank" rel="noopener" className="text-muted transition-colors hover:text-ink">
+                        С интро ↗
+                      </a>
+                    )}
                     <a href={`/works/${e.id}/`} target="_blank" rel="noopener" className="link">
                       Открыть ↗
                     </a>

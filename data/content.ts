@@ -13,6 +13,8 @@
  * - Мидийное место: Instagram screenshots; 100–200 likes on the best reels per Ivan.
  * - Education, languages, award: MGIK documents and the diploma scan.
  * - Legal name, tax status, INN and phone: given by Ivan for the YooKassa application (YOOKASSA_REQUIREMENTS.md).
+ * - YooKassa: the shop is approved, per Ivan on 15 November 2026; he sends clients its payment links.
+ *   Card and SBP are what the legal pages already named; correct `preview.pricing.official.pay` if the shop gives more.
  * - Prices: given by Ivan on 11 November 2026 as provisional ("not a final version"), see `prices` below.
  *
  * Where something was not measured, the copy says so. Keep it that way.
@@ -61,6 +63,8 @@ export const profile = {
     en: "self-employed, professional income tax payer",
   } as L,
   inn: "673207647506",
+  /* ФНС's public check of a self-employed person's status: anyone enters the INN and a date. It can't be pre-filled. */
+  statusCheckUrl: "https://npd.nalog.ru/check-status/",
 };
 
 export const nav: { id: string; label: L }[] = [
@@ -641,7 +645,6 @@ export interface Tier {
   name: L;
   /** roubles */
   price: number;
-  summary: L;
   /** the id of the plan this one builds on */
   extends?: string;
   features: Feature[];
@@ -659,10 +662,6 @@ export const prices = {
       id: "basic",
       name: { ru: "Базовый", en: "Basic" },
       price: 14900,
-      summary: {
-        ru: "Сайт с админкой: новости и содержимое обновляете сами",
-        en: "A site with an admin page: you post news and update content yourself",
-      },
       features: [
         {
           icon: "host",
@@ -684,19 +683,8 @@ export const prices = {
       id: "extended",
       name: { ru: "Расширенный", en: "Extended" },
       price: 24900,
-      summary: {
-        ru: "Сайт с пользователями: вход, лента и аналитика",
-        en: "A site with users: sign-in, a feed and analytics",
-      },
       extends: "basic",
       features: [
-        {
-          icon: "chart",
-          text: {
-            ru: "Система управления с аналитикой, лентой и публикациями",
-            en: "A management system with analytics, a feed and posting",
-          },
-        },
         /* Ivan's wording of 14 November 2026, in place of «Элементы мини-соцсети» */
         {
           icon: "access",
@@ -708,8 +696,8 @@ export const prices = {
         {
           icon: "login",
           text: {
-            ru: "Вход для пользователей: OAuth и логин с паролем",
-            en: "User sign-in: OAuth and login with a password",
+            ru: "Вход для пользователей через Google, Яндекс или другие соцсети",
+            en: "User sign-in with Google, Yandex or other social accounts",
           },
         },
         {
@@ -741,10 +729,6 @@ export const prices = {
       id: "premium",
       name: { ru: "Премиум", en: "Premium" },
       price: 45000,
-      summary: {
-        ru: "Оплата и запись на сайте плюс айдентика вашего бренда",
-        en: "Payments and bookings on the site, plus your brand identity",
-      },
       extends: "extended",
       features: [
         {
@@ -1024,14 +1008,33 @@ export const preview = {
     steps: [
       { ru: "Вы смотрите превью и пишете, что поменять", en: "You look through the preview and tell me what to change" },
       {
-        ru: "Выбираете вариант — я подтверждаю состав и срок и присылаю счёт",
-        en: "You choose an option; I confirm what's included and the timeline, and send an invoice",
+        ru: "Выбираете вариант — я подтверждаю состав и срок и присылаю ссылку на оплату",
+        en: "You choose an option; I confirm what's included and the timeline, and send a payment link",
       },
       {
         ru: "После оплаты вношу правки и передаю сайт: файлами или уже на вашем домене",
         en: "Once it's paid, I make the changes and hand the site over: as files, or live on your domain",
       },
     ] as L[],
+    /*
+     * Right under the steps that ask the client to pay first: the facts a client can check for themselves, so that
+     * paying a stranger doesn't look like a scam. Ivan asked for it in this card only (15 November 2026), not on the
+     * main page or in the first message. The INN comes from `profile.inn` and is not written into these strings.
+     */
+    official: {
+      label: { ru: "Работаю официально", en: "I work officially" } as L,
+      status: { ru: "Самозанятый, ИНН", en: "Registered self-employed in Russia, INN" } as L,
+      check: { ru: "Проверить статус на сайте ФНС", en: "Check the status with the tax service" } as L,
+      pay: {
+        ru: "Оплата по ссылке ЮKassa: картой или через СБП. Данные карты я не получаю",
+        en: "You pay by a YooKassa link: card or SBP. I never see your card details",
+      } as L,
+      receipt: {
+        // a no-break space keeps the app's name on one line
+        ru: "После оплаты вам приходит чек из «Мой налог»",
+        en: "After payment you get a receipt from «Мой налог», the tax service's app",
+      } as L,
+    },
     contactLabel: { ru: "Связаться со мной", en: "Get in touch" } as L,
     telegramCta: { ru: "Написать в Telegram", en: "Message me on Telegram" } as L,
     telegramText: {

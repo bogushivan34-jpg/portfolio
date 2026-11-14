@@ -281,6 +281,28 @@ function PricingInfo({ work, lang }: { work: Work; lang: Lang }) {
             ))}
           </ol>
 
+          {/* the steps ask the client to pay first: what they can check about who they pay (content.ts, official) */}
+          <p className="label mt-7">{p.official.label[lang]}</p>
+          <ul className="mt-3 space-y-3">
+            <li className="pr-line flex gap-3 text-[15px] leading-[1.5]" style={cssVars({ "--j": 0 })}>
+              <LineIcon name="access" />
+              <span>
+                {p.official.status[lang]} {profile.inn}.{" "}
+                <a href={profile.statusCheckUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-ink">
+                  {p.official.check[lang]}
+                </a>
+              </span>
+            </li>
+            <li className="pr-line flex gap-3 text-[15px] leading-[1.5]" style={cssVars({ "--j": 1 })}>
+              <LineIcon name="pay" />
+              <span>{p.official.pay[lang]}</span>
+            </li>
+            <li className="pr-line flex gap-3 text-[15px] leading-[1.5]" style={cssVars({ "--j": 2 })}>
+              <LineIcon />
+              <span>{p.official.receipt[lang]}</span>
+            </li>
+          </ul>
+
           <p className="label mt-8">{p.contactLabel[lang]}</p>
           <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-3">
             <a href={telegram(telegramText)} target="_blank" rel="noopener noreferrer" className="btn">

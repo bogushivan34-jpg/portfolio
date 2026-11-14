@@ -25,6 +25,7 @@ export default function WorksPage() {
     story: !!w.story,
     pricing: !!w.pricing,
     placeholders: !!w.placeholders,
+    intro: !!w.intro,
   }));
   return <WorksIndex locked={token ? lock(entries, token) : null} />;
 }
