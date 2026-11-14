@@ -1,0 +1,140 @@
+/*
+ * A term with a dashed underline, and the hint it opens (components/Hint.tsx).
+ */
+
+.hint-wrap {
+  position: relative;
+}
+
+/* The term: text like its line, a dashed underline to say there is more behind it */
+.hint-term {
+  font: inherit;
+  color: inherit;
+  padding: 0;
+  cursor: help;
+  text-decoration: underline dashed;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  text-decoration-color: color-mix(in srgb, currentColor 55%, transparent);
+  transition: text-decoration-color 0.15s ease-out, color 0.15s ease-out;
+  /* how long a hover lasts before the hint opens, and how long it stays after the pointer leaves */
+  interest-delay-start: 0.15s;
+  interest-delay-end: 0.25s;
+}
+
+.hint-term:hover,
+.hint-term[aria-expanded="true"] {
+  color: #1d5a43;
+  text-decoration-color: currentColor;
+}
+
+/* The hint: a small dark card. `display` is left to the browser, which hides a closed popover. */
+.hint-pop {
+  width: max-content;
+  max-width: min(300px, calc(100vw - 24px));
+  padding: 12px 14px 13px;
+  border: 0;
+  border-radius: 12px;
+  background: #15171a;
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: none;
+  white-space: normal;
+  box-shadow:
+    0 14px 36px rgba(21, 23, 26, 0.28),
+    0 2px 6px rgba(21, 23, 26, 0.18);
+
+  /* closed: the state it fades back to. `display` and `overlay` keep it in the top layer while it fades. */
+  opacity: 0;
+  transition-property: opacity, transform, display, overlay;
+  transition-duration: 0.18s;
+  transition-timing-function: ease-out;
+  /* separate from the shorthand, so a browser that doesn't know it keeps the rest */
+  transition-behavior: allow-discrete;
+}
+
+.hint-title {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9fd3bd;
+}
+
+/* open (":is" forgives the selector a browser doesn't know; data-open is the no-popover fallback's state) */
+.hint-pop:is(:popover-open, [data-open="true"]) {
+  opacity: 1;
+}
+
+@starting-style {
+  .hint-pop:is(:popover-open, [data-open="true"]) {
+    opacity: 0;
+  }
+}
+
+/* it grows out of the term it explains; with reduced motion it only fades, and faster */
+@media (prefers-reduced-motion: no-preference) {
+  .hint-pop {
+    transform: translateY(4px) scale(0.97);
+  }
+
+  .hint-pop:is(:popover-open, [data-open="true"]) {
+    transform: none;
+  }
+
+  @starting-style {
+    .hint-pop:is(:popover-open, [data-open="true"]) {
+      transform: translateY(4px) scale(0.97);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hint-pop {
+    transition-duration: 0.1s;
+  }
+}
+
+/* Tethered to the term: above it, below when there is no room. Gated, so that without anchor positioning the
+   browser's own popover placement isn't thrown away for nothing. */
+@supports (position-area: block-start) and (anchor-name: --a) {
+  .hint-pop {
+    inset: auto;
+    margin: 8px 0;
+    position-area: block-start;
+    position-try-fallbacks: flip-block;
+  }
+}
+
+/* No anchor positioning: Hint.tsx sets left and top/bottom from the term's position as the hint opens. */
+@supports not ((position-area: block-start) and (anchor-name: --a)) {
+  .hint-pop {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    width: min(300px, calc(100vw - 16px));
+    max-width: none;
+  }
+}
+
+/* No popover at all: a plain block above the term. */
+@supports not selector(:popover-open) {
+  .hint-pop {
+    display: none;
+    position: absolute;
+    z-index: 50;
+    left: 0;
+    bottom: calc(100% + 8px);
+    width: min(300px, 80vw);
+  }
+
+  .hint-pop[data-open="true"] {
+    display: block;
+  }
+}

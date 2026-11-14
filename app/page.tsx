@@ -6,14 +6,12 @@ import Approach from "@/components/Approach";
 import Contact from "@/components/Contact";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
-import Prices from "@/components/Prices";
 import Services from "@/components/Services";
 import Work from "@/components/Work";
 import { Lang } from "@/data/content";
 
 export default function Home() {
   const [lang, setLang] = useState<Lang>("ru");
-  const [order, setOrder] = useState<string | null>(null);
 
   /* The page is built in Russian; `?lang=en` opens it in English, so either version can be sent as a link. */
   useEffect(() => {
@@ -33,12 +31,6 @@ export default function Home() {
     window.history.replaceState(null, "", url);
   };
 
-  /* "Order" on a price: attach that option to the enquiry form and take the visitor to it. */
-  const startOrder = (tierId: string) => {
-    setOrder(tierId);
-    document.getElementById("order")?.scrollIntoView();
-  };
-
   return (
     <>
       <Header lang={lang} onToggleLang={toggleLang} />
@@ -47,10 +39,9 @@ export default function Home() {
         <Work lang={lang} />
         <Approach lang={lang} />
         <Services lang={lang} />
-        <Prices lang={lang} onOrder={startOrder} />
         <About lang={lang} />
       </main>
-      <Contact lang={lang} order={order} onClearOrder={() => setOrder(null)} />
+      <Contact lang={lang} />
     </>
   );
 }

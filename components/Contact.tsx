@@ -4,16 +4,7 @@ import { Lang, contact, legalLinks, profile } from "@/data/content";
 const directLink =
   "mt-1 inline-block text-[22px] font-semibold underline decoration-white/30 underline-offset-[6px] transition-colors hover:decoration-white md:text-[24px]";
 
-export default function Contact({
-  lang,
-  order,
-  onClearOrder,
-}: {
-  lang: Lang;
-  /** the price option chosen with "Order", if any */
-  order: string | null;
-  onClearOrder: () => void;
-}) {
+export default function Contact({ lang }: { lang: Lang }) {
   return (
     <footer id="contact" className="mt-16 bg-ink text-white md:mt-24">
       <div className="wrap py-14 md:py-20">
@@ -49,9 +40,7 @@ export default function Contact({
             </div>
           </div>
 
-          <div id="order">
-            <ContactForm lang={lang} order={order} onClearOrder={onClearOrder} />
-          </div>
+          <ContactForm lang={lang} />
         </div>
 
         {/* Who the customer deals with and pays: name, tax status, INN and contacts, then the documents */}

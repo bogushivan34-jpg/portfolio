@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Lang, form, formatPrice, legalLinks, preview as t, prices, profile } from "@/data/content";
+import Plans, { LineIcon, cssVars, useEntrance } from "@/components/Plans";
+import { Lang, form, formatPrice, legalLinks, preview as t, prices, profile, quoted, type Tier } from "@/data/content";
 import type { Work } from "@/data/works";
 import { submitForm } from "@/lib/submit";
 
 export type PopupView = "feedback" | "pricing";
 type Status = "idle" | "sending" | "sent" | "failed";
+
+/** ms the card takes to arrive, before the plans in it start coming in */
+const OPEN_MS = 90;
 
 const fieldClass =
   "mt-1.5 w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-[16px] text-ink placeholder:text-muted/70 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20";
@@ -57,7 +61,8 @@ export default function PreviewPopup({
         </button>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-6 pt-4">
+      {/* data-scroll-box: what the plans measure themselves against as they come in (Plans.tsx) */}
+      <div data-scroll-box className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-6 pt-4">
         {view === "pricing" ? <PricingInfo work={work} lang={lang} /> : <Feedback work={work} lang={lang} />}
       </div>
     </aside>
@@ -209,99 +214,95 @@ function Feedback({ work, lang }: { work: Work; lang: Lang }) {
 
 function PricingInfo({ work, lang }: { work: Work; lang: Lang }) {
   const p = t.pricing;
-  /* a price agreed for this client; without it, the three standard options */
+  /* a price agreed for this client; without it, the three standard plans */
   const pricing = work.pricing;
+  const [head, headView] = useEntrance<HTMLDivElement>();
+  const [foot, footView, footLate] = useEntrance<HTMLDivElement>();
+
   const telegramText = `${p.telegramText[lang]}${work.title[lang]} (ivanbogush.ru/works/${work.id})`;
   const telegram = (text: string) => `${profile.telegramUrl}?text=${encodeURIComponent(text)}`;
-  const includes = (lines: { ru: string; en: string }[]) => (
-    <ul className="mt-3 space-y-2">
-      {lines.map((line, idx) => (
-        <li key={idx} className="flex gap-3 text-[16px] leading-[1.5]">
-          <span aria-hidden="true" className="mt-[11px] h-px w-3 shrink-0 bg-muted" />
-          <span>{line[lang]}</span>
-        </li>
-      ))}
-    </ul>
-  );
+  const choose = (tier: Tier) =>
+    telegram(`${telegramText}. ${p.chooseText[lang]} ${quoted(tier.name[lang], lang)} — ${formatPrice(tier.price, lang)}.`);
 
   return (
     <div>
-      {pricing ? (
-        <>
-          <div className="rounded-xl bg-paper p-5">
-            <p className="label">{p.priceLabel[lang]}</p>
-            {pricing.price ? (
-              <p className="num mt-2 text-[28px] leading-tight">{pricing.price[lang]}</p>
-            ) : (
-              <p className="mt-2 text-[16px] leading-[1.55] text-ink">{p.priceOnCall[lang]}</p>
-            )}
-            {pricing.timeline && (
-              <>
-                <p className="label mt-5">{p.timelineLabel[lang]}</p>
-                <p className="mt-2 text-ink">{pricing.timeline[lang]}</p>
-              </>
-            )}
-          </div>
+      <div ref={head} data-view={headView} style={cssVars({ "--t": `${OPEN_MS}ms` })}>
+        {pricing ? (
+          <>
+            <div className="pr-rise rounded-xl bg-paper p-5">
+              <p className="label">{p.priceLabel[lang]}</p>
+              {pricing.price ? (
+                <p className="num mt-2 text-[28px] leading-tight">{pricing.price[lang]}</p>
+              ) : (
+                <p className="mt-2 text-[16px] leading-[1.55] text-ink">{p.priceOnCall[lang]}</p>
+              )}
+              {pricing.timeline && (
+                <>
+                  <p className="label mt-5">{p.timelineLabel[lang]}</p>
+                  <p className="mt-2 text-ink">{pricing.timeline[lang]}</p>
+                </>
+              )}
+            </div>
 
-          <p className="label mt-7">{p.includesLabel[lang]}</p>
-          {includes(pricing.includes)}
-        </>
-      ) : (
-        <>
-          <p className="label">{p.optionsLabel[lang]}</p>
-          <ul className="mt-3 space-y-3">
-            {prices.tiers.map((tier) => (
-              <li key={tier.id} className="rounded-xl border border-line p-5">
-                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                  <p className="text-[18px] font-semibold leading-snug text-ink">{tier.name[lang]}</p>
-                  <p className="num whitespace-nowrap text-[22px] leading-tight">{formatPrice(tier.price, lang)}</p>
-                </div>
-                <p className="mt-1 text-[15px] leading-[1.5] text-muted">{tier.summary[lang]}</p>
-                {includes(tier.includes)}
-                <a
-                  href={telegram(`${telegramText}. ${p.chooseText[lang]} «${tier.name[lang]}» — ${formatPrice(tier.price, lang)}.`)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="link mt-4 inline-block text-[15px]"
-                >
-                  {p.choose[lang]}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-
-      <p className="label mt-7">{p.stepsLabel[lang]}</p>
-      <ol className="mt-3 space-y-3">
-        {p.steps.map((step, idx) => (
-          <li key={idx} className="flex gap-3 text-[16px] leading-[1.5]">
-            <span className="num w-4 shrink-0 text-[15px] text-accent">{idx + 1}</span>
-            <span>{step[lang]}</span>
-          </li>
-        ))}
-      </ol>
-
-      <p className="label mt-8">{p.contactLabel[lang]}</p>
-      <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-3">
-        <a href={telegram(telegramText)} target="_blank" rel="noopener noreferrer" className="btn">
-          {p.telegramCta[lang]}
-        </a>
-        <a href={`mailto:${profile.email}`} className="link">
-          {profile.email}
-        </a>
-        <a href={profile.phoneHref} className="link whitespace-nowrap">
-          {profile.phone}
-        </a>
+            <p className="label pr-rise mt-7" style={cssVars({ "--d": "80ms" })}>
+              {p.includesLabel[lang]}
+            </p>
+            <ul className="mt-3 space-y-3">
+              {pricing.includes.map((item, j) => (
+                <li key={j} className="pr-line flex gap-3 text-[15px] leading-[1.5]" style={cssVars({ "--j": j })}>
+                  <LineIcon />
+                  <span>{item[lang]}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <p className="label pr-rise">{p.optionsLabel[lang]}</p>
+        )}
       </div>
 
-      <p className="mt-8 flex flex-wrap gap-x-5 gap-y-1 border-t border-line pt-5 text-[14px] text-muted">
-        {legalLinks.slice(0, 2).map((item) => (
-          <a key={item.href} href={item.href} target="_blank" className="underline underline-offset-2 hover:text-ink">
-            {item.label[lang]}
-          </a>
-        ))}
-      </p>
+      {!pricing && (
+        <div className="mt-3">
+          <Plans lang={lang} cta={p.choose[lang]} hrefFor={choose} delay={OPEN_MS + 70} />
+        </div>
+      )}
+
+      <div ref={foot} data-view={footView} style={cssVars({ "--t": footLate ? "0ms" : `${OPEN_MS + 400}ms` })}>
+        {!pricing && <p className="pr-rise mt-3 text-[14px] leading-[1.5] text-muted">{prices.domainNote[lang]}</p>}
+
+        <div className="pr-rise" style={cssVars({ "--d": "70ms" })}>
+          <p className="label mt-7">{p.stepsLabel[lang]}</p>
+          <ol className="mt-3 space-y-3">
+            {p.steps.map((step, idx) => (
+              <li key={idx} className="flex gap-3 text-[16px] leading-[1.5]">
+                <span className="num w-4 shrink-0 text-[15px] text-accent">{idx + 1}</span>
+                <span>{step[lang]}</span>
+              </li>
+            ))}
+          </ol>
+
+          <p className="label mt-8">{p.contactLabel[lang]}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <a href={telegram(telegramText)} target="_blank" rel="noopener noreferrer" className="btn">
+              {p.telegramCta[lang]}
+            </a>
+            <a href={`mailto:${profile.email}`} className="link">
+              {profile.email}
+            </a>
+            <a href={profile.phoneHref} className="link whitespace-nowrap">
+              {profile.phone}
+            </a>
+          </div>
+
+          <p className="mt-8 flex flex-wrap gap-x-5 gap-y-1 border-t border-line pt-5 text-[14px] text-muted">
+            {legalLinks.slice(0, 2).map((item) => (
+              <a key={item.href} href={item.href} target="_blank" className="underline underline-offset-2 hover:text-ink">
+                {item.label[lang]}
+              </a>
+            ))}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

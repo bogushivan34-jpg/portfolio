@@ -67,7 +67,6 @@ export const nav: { id: string; label: L }[] = [
   { id: "work", label: { ru: "Кейсы", en: "Work" } },
   { id: "approach", label: { ru: "Подход", en: "Approach" } },
   { id: "services", label: { ru: "Услуги", en: "Services" } },
-  { id: "prices", label: { ru: "Цены", en: "Prices" } },
   { id: "about", label: { ru: "Обо мне", en: "About" } },
 ];
 
@@ -603,80 +602,199 @@ export const services = {
 };
 
 /*
- * Prices for a site: shown on the main page (#prices) and in the pricing window of a client's preview (/works/<id>).
- * PROVISIONAL: Ivan gave these on 11 November 2026 as "not a final version". Change them here and nowhere else:
- * the offer (/oferta) and the payment page (/payment) point at this list instead of repeating the figures.
+ * Prices for a site. They are shown in ONE place: the pricing card of a client's preview (/works/<id>, the small
+ * card over Ivan's photo, opened with «Стоимость»). The main page has no price list, by Ivan's decision of 14 November 2026.
+ * PROVISIONAL: Ivan gave the figures on 11 November 2026 as "not a final version", and what each plan includes on
+ * 13 November 2026. On 14 November he asked for Premium to be filled out with "what web designers are commonly
+ * paid for" and then cut that list down himself (see the note in the Premium plan).
+ *
+ * The offer (/oferta) and the payment page (/payment) point to the sample preview, /works/sample/?open=pricing,
+ * as the place where the plans and prices are published (data/works.ts). Nothing else on the site links there.
+ *
+ * The plans build on each other: a plan with `extends` includes everything in that plan and lists only what it adds.
  */
+/** the small picture beside a feature line; drawn in components/Plans.tsx */
+export type FeatureIcon =
+  | "host"
+  | "admin"
+  | "chart"
+  | "access"
+  | "login"
+  | "geo"
+  | "telegram"
+  | "pay"
+  | "booking"
+  | "identity"
+  | "lang";
+
+export interface Feature {
+  text: L;
+  icon?: FeatureIcon;
+  /** not everyone needs it: shown with a small "optional" tag */
+  optional?: boolean;
+  /** a word in `text` that is underlined with a dashed line and explained in a hint on hover or tap */
+  term?: { word: string; title: string; hint: L };
+}
+
 export interface Tier {
   id: string;
   name: L;
   /** roubles */
   price: number;
   summary: L;
-  includes: L[];
+  /** the id of the plan this one builds on */
+  extends?: string;
+  features: Feature[];
 }
 
 export const formatPrice = (roubles: number, lang: Lang) =>
-  `${String(roubles).replace(/\B(?=(\d{3})+(?!\d))/g, lang === "ru" ? "\u00a0" : ",")}\u00a0₽`;
+  `${String(roubles).replace(/\B(?=(\d{3})+(?!\d))/g, lang === "ru" ? " " : ",")} ₽`;
+
+/** A plan’s name inside a sentence, in that language’s quotation marks. */
+export const quoted = (name: string, lang: Lang) => (lang === "ru" ? `«${name}»` : `“${name}”`);
 
 export const prices = {
-  title: { ru: "Цены", en: "Prices" } as L,
-  lead: {
-    ru: "Сайт для специалиста или небольшого проекта: три варианта, цена известна до заказа.",
-    en: "A website for an independent professional or a small business: three options, with the price known before you order.",
-  } as L,
   tiers: [
     {
-      id: "as-is",
-      name: { ru: "Забрать как есть", en: "As is" },
+      id: "basic",
+      name: { ru: "Базовый", en: "Basic" },
       price: 14900,
-      summary: { ru: "Готовый сайт, который вы размещаете сами", en: "The finished site, which you host yourself" },
-      includes: [
-        { ru: "Сайт: исходный код и все файлы", en: "The site: source code and all files" },
-        { ru: "Одна небольшая правка: текст или фотография", en: "One small change: a text or a photo" },
-        { ru: "Домен и хостинг остаются на вашей стороне", en: "The domain and hosting stay on your side" },
+      summary: {
+        ru: "Сайт с админкой: новости и содержимое обновляете сами",
+        en: "A site with an admin page: you post news and update content yourself",
+      },
+      features: [
+        {
+          icon: "host",
+          text: {
+            ru: "Домен и хостинг: оплачу и настрою сам или подключу ваши",
+            en: "Domain and hosting: I pay for and set them up, or connect yours",
+          },
+        },
+        {
+          icon: "admin",
+          text: {
+            ru: "Админка, сделанная под ваш сайт: публикуете новости и обновляете содержимое",
+            en: "An admin page built for your site: post news and update the content",
+          },
+        },
       ],
     },
     {
-      id: "turnkey",
-      name: { ru: "Под ключ", en: "Turnkey" },
+      id: "extended",
+      name: { ru: "Расширенный", en: "Extended" },
       price: 24900,
-      summary: { ru: "Сайт, запущенный на вашем домене", en: "The site, live on your own domain" },
-      includes: [
-        { ru: "Сайт и один круг правок", en: "The site and one round of revisions" },
-        { ru: "Регистрация домена .ru", en: "Registration of a .ru domain" },
-        { ru: "Настройка бесплатного хостинга", en: "Free hosting, set up for you" },
-        { ru: "Заявки с формы приходят вам в Telegram", en: "Enquiries from the form arrive in your Telegram" },
-        { ru: "Год мелких правок текста", en: "A year of small text updates" },
+      summary: {
+        ru: "Сайт с пользователями: вход, лента и аналитика",
+        en: "A site with users: sign-in, a feed and analytics",
+      },
+      extends: "basic",
+      features: [
+        {
+          icon: "chart",
+          text: {
+            ru: "Система управления с аналитикой, лентой и публикациями",
+            en: "A management system with analytics, a feed and posting",
+          },
+        },
+        /* Ivan's wording of 14 November 2026, in place of «Элементы мини-соцсети» */
+        {
+          icon: "access",
+          text: {
+            ru: "Доступ без VPN: настрою сайт для пользователей из России или для России и зарубежных IP",
+            en: "Access without a VPN: I set the site up for visitors in Russia, or for Russia and foreign IPs",
+          },
+        },
+        {
+          icon: "login",
+          text: {
+            ru: "Вход для пользователей: OAuth и логин с паролем",
+            en: "User sign-in: OAuth and login with a password",
+          },
+        },
+        {
+          icon: "geo",
+          text: {
+            ru: "GEO: сайт подготовлен к поиску через нейросети",
+            en: "GEO: the site is prepared for AI search",
+          },
+          term: {
+            word: "GEO",
+            title: "Generative Engine Optimization",
+            hint: {
+              ru: "Оптимизация под генеративный поиск. Готовлю структуру, разметку и тексты сайта так, чтобы ChatGPT, Алиса и другие ИИ-ассистенты понимали, кто вы и что предлагаете, и могли сослаться на вас в ответе.",
+              en: "Optimisation for generative search. I prepare the site's structure, markup and copy so that ChatGPT and other AI assistants understand who you are and what you offer, and can cite you in an answer.",
+            },
+          },
+        },
+        {
+          icon: "telegram",
+          text: {
+            ru: "Telegram-бот: заявки с сайта приходят вам в Telegram",
+            en: "A Telegram bot: enquiries from the site arrive in your Telegram",
+          },
+          optional: true,
+        },
       ],
     },
     {
       id: "premium",
       name: { ru: "Премиум", en: "Premium" },
       price: 45000,
-      summary: { ru: "Несколько страниц, онлайн-оплата и поиск", en: "Several pages, online payment and search" },
-      includes: [
-        { ru: "Всё из варианта «Под ключ»", en: "Everything in Turnkey" },
-        { ru: "Несколько страниц: блог или статьи, полная галерея работ", en: "Several pages: a blog or articles, a full gallery of your work" },
-        { ru: "Онлайн-оплата на сайте: ЮKassa или Robokassa", en: "Online payment on the site: YooKassa or Robokassa" },
-        { ru: "Настройка сайта для поиска в Яндексе", en: "Set-up for Yandex search" },
+      summary: {
+        ru: "Оплата и запись на сайте плюс айдентика вашего бренда",
+        en: "Payments and bookings on the site, plus your brand identity",
+      },
+      extends: "extended",
+      features: [
+        {
+          icon: "pay",
+          text: {
+            ru: "Онлайн-оплата на сайте: ЮKassa или Robokassa",
+            en: "Online payment on the site: YooKassa or Robokassa",
+          },
+        },
+        /*
+         * The rest is from Claude's list of what a web designer is usually paid for (14 November 2026), as Ivan
+         * left it. He struck four lines as "fluff, already included in cheaper plans": «фирменный стиль», copy
+         * for the pages, SEO set-up and a year of small edits; don't list those as extras of any plan. Then he
+         * allowed «айдентика бренда» in place of «фирменный стиль». What it consists of (the words after the
+         * colon) is Claude's wording, not his.
+         */
+        {
+          icon: "booking",
+          text: {
+            ru: "Онлайн-запись и интеграции: CRM, календарь, рассылки",
+            en: "Online booking and integrations: CRM, calendar, mailing lists",
+          },
+        },
+        {
+          icon: "identity",
+          text: {
+            ru: "Айдентика бренда: логотип, цвета, шрифты, оформление соцсетей",
+            en: "Brand identity: logo, colours, type and the look of your social pages",
+          },
+        },
+        {
+          icon: "lang",
+          text: { ru: "Вторая языковая версия сайта", en: "A second language version of the site" },
+          optional: true,
+        },
       ],
     },
   ] as Tier[],
-  order: { ru: "Заказать", en: "Order" } as L,
-  otherLabel: { ru: "Остальные услуги", en: "Other services" } as L,
-  other: {
-    ru: "Соцсети и контент, каналы привлечения и аналитику считаю под задачу. Цену называю до начала работы и фиксирую в переписке.",
-    en: "Social content, acquisition channels and analytics are priced per task. I name the price before any work starts and confirm it in writing.",
-  } as L,
-  paymentLabel: { ru: "Оплата", en: "Payment" } as L,
-  payment: {
-    ru: "После заявки подтверждаю состав заказа и срок и присылаю счёт или ссылку на оплату: банковской картой или через СБП. Чек приходит из приложения «Мой налог».",
-    en: "After your enquiry I confirm what's included and the timeline, and send an invoice or a payment link: by bank card or through SBP (Russia's Faster Payments System). You get a receipt from the “My Tax” app.",
+  /** the line that stands for the plan a plan builds on: "Everything in Basic, plus:" */
+  everythingIn: { ru: "Всё из варианта", en: "Everything in" } as L,
+  plus: { ru: "плюс", en: "plus" } as L,
+  optional: { ru: "по желанию", en: "optional" } as L,
+  /* The rule for the domain; "the first year" is the offer's wording (/oferta, section on third-party services). */
+  domainNote: {
+    ru: "Домен оплачиваю на первый год. Если он стоит дороже 1 000 ₽, его стоимость добавляется к цене.",
+    en: "I pay for the domain for the first year. If it costs more than 1,000 ₽, its cost is added to the price.",
   } as L,
 };
 
-/* The documents a customer agrees to; in Russian only. Linked from the footer, the price list and the previews. */
+/* The documents a customer agrees to; in Russian only. Linked from the footer and the previews. */
 export const legalLinks: { href: string; label: L }[] = [
   { href: "/oferta", label: { ru: "Публичная оферта", en: "Public offer" } },
   { href: "/payment", label: { ru: "Оплата и возврат", en: "Payment and refunds" } },
@@ -802,19 +920,6 @@ export const form = {
   viaEmail: { ru: "Отправить письмом", en: "Send by email" } as L,
   back: { ru: "Назад к форме", en: "Back to the form" } as L,
   mailSubject: { ru: "Заявка с сайта", en: "Website enquiry" } as L,
-
-  /* Shown when the form was opened with "Order" on a price */
-  orderTitle: { ru: "Оформить заказ", en: "Place an order" } as L,
-  orderLabel: { ru: "Заказ", en: "Order" } as L,
-  orderRemove: { ru: "Убрать", en: "Remove" } as L,
-  orderNote: {
-    ru: "Платить сейчас не нужно: сначала подтвержу состав и срок, потом пришлю счёт.",
-    en: "Nothing to pay now: I'll confirm what's included and the timeline first, then send an invoice.",
-  } as L,
-  orderSentText: {
-    ru: "Спасибо! В течение дня подтвержу состав заказа и срок и пришлю счёт по контакту, который вы оставили.",
-    en: "Thank you! Within a day I'll confirm what's included and the timeline, and send an invoice to the contact you left.",
-  } as L,
 };
 
 /*
@@ -832,6 +937,11 @@ export interface Pricing {
 export const preview = {
   frameTitle: { ru: "Превью сайта", en: "Site preview" } as L,
   close: { ru: "Закрыть", en: "Close" } as L,
+
+  /* The first screen, before the site: its line to the client is the work's own (data/works.ts, Intro) */
+  intro: {
+    show: { ru: "Показать", en: "Show me" } as L,
+  },
 
   /* Ivan's photo in the corner of the site, and the short menu it opens */
   menu: {

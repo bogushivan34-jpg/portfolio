@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Lang, form as t, formatPrice, prices, profile } from "@/data/content";
+import { useState } from "react";
+import { Lang, form as t, profile } from "@/data/content";
 import { submitForm } from "@/lib/submit";
 
 type Status = "idle" | "sending" | "sent" | "failed" | "limited";
@@ -11,38 +11,18 @@ const empty = { name: "", contact: "", profession: "", message: "", website: "" 
 const fieldClass =
   "mt-1.5 w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-[16px] text-ink placeholder:text-muted/70 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20";
 
-export default function ContactForm({
-  lang,
-  order,
-  onClearOrder,
-}: {
-  lang: Lang;
-  /** the id of the price option chosen with "Order" (data/content.ts, prices) */
-  order?: string | null;
-  onClearOrder?: () => void;
-}) {
+export default function ContactForm({ lang }: { lang: Lang }) {
   const [status, setStatus] = useState<Status>("idle");
   const [values, setValues] = useState(empty);
   const [needs, setNeeds] = useState<string[]>([]);
   const [consent, setConsent] = useState(false);
-  /** whether the enquiry that was just sent carried an order: decides the thank-you text */
-  const [sentOrder, setSentOrder] = useState(false);
 
   const set = (key: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setValues((v) => ({ ...v, [key]: e.target.value }));
   const toggleNeed = (id: string) => setNeeds((n) => (n.includes(id) ? n.filter((x) => x !== id) : [...n, id]));
 
-  const tier = prices.tiers.find((x) => x.id === order);
-  const orderText = tier ? `«${tier.name[lang]}» — ${formatPrice(tier.price, lang)}` : "";
-
-  /* Choosing an option after an enquiry was sent brings the form back for the order. */
-  useEffect(() => {
-    if (order) setStatus((s) => (s === "sent" ? "idle" : s));
-  }, [order]);
-
   const needLabels = t.needs.filter((n) => needs.includes(n.id)).map((n) => n.label[lang]);
   const plainText = [
-    tier && `${t.orderLabel[lang]}: ${orderText}`,
     `${t.name[lang]}: ${values.name}`,
     `${t.contact[lang]}: ${values.contact}`,
     values.profession && `${t.profession[lang]}: ${values.profession}`,
@@ -56,13 +36,7 @@ export default function ContactForm({
     e.preventDefault();
     setStatus("sending");
     try {
-      /* The order travels as the first "need": the Worker's email lists it under "Что нужно". */
-      const sentNeeds = tier ? [`${t.orderLabel[lang]}: ${orderText}`, ...needLabels] : needLabels;
-      const res = await submitForm({ ...values, needs: sentNeeds, consent, lang });
-      if (res.ok) {
-        setSentOrder(Boolean(tier));
-        onClearOrder?.();
-      }
+      const res = await submitForm({ ...values, needs: needLabels, consent, lang });
       setStatus(res.ok ? "sent" : res.status === 429 ? "limited" : "failed");
     } catch {
       setStatus("failed");
@@ -73,7 +47,7 @@ export default function ContactForm({
     return (
       <div className="rounded-2xl bg-white p-6 text-body sm:p-8" role="status">
         <p className="text-[22px] font-semibold text-ink">{t.sentTitle[lang]}</p>
-        <p className="mt-3">{sentOrder ? t.orderSentText[lang] : t.sentText[lang]}</p>
+        <p className="mt-3">{t.sentText[lang]}</p>
         <button
           type="button"
           className="link mt-6"
@@ -123,22 +97,7 @@ export default function ContactForm({
 
   return (
     <form onSubmit={submit} className="rounded-2xl bg-white p-6 text-body sm:p-8">
-      <p className="text-[22px] font-semibold text-ink">{tier ? t.orderTitle[lang] : t.title[lang]}</p>
-
-      {tier && (
-        <div className="mt-5 rounded-lg bg-accentSoft px-4 py-3">
-          <div className="flex items-start justify-between gap-4">
-            <p className="text-[16px] font-medium leading-[1.4] text-ink">
-              <span className="label mb-1 block text-accent">{t.orderLabel[lang]}</span>
-              {orderText}
-            </p>
-            <button type="button" onClick={onClearOrder} className="shrink-0 text-[14px] text-muted hover:text-ink">
-              {t.orderRemove[lang]} ✕
-            </button>
-          </div>
-          <p className="mt-2 text-[14px] leading-[1.5]">{t.orderNote[lang]}</p>
-        </div>
-      )}
+      <p className="text-[22px] font-semibold text-ink">{t.title[lang]}</p>
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2">
         <label className="block text-[15px] font-medium text-ink">

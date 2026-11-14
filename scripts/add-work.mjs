@@ -12,8 +12,9 @@
  * often the site is republished. The build goes to public/previews/<id>/, marked noindex, and the work is added to
  * data/works.json (or its date updated). Run it again after changing the site: the id stays the same.
  *
- * The work's title, pricing and story (why this client needs this site) are read from the client's own file,
- * ../peoplebrands/<client>/work.json, on every run: edit them there, not in data/works.json.
+ * The work's title, pricing, intro (the line on the first screen) and story (why this client needs this site) are
+ * read from the client's own file, ../peoplebrands/<client>/work.json, on every run: edit them there, not in
+ * data/works.json.
  *
  * The client sites share one node_modules in ../peoplebrands (npm workspaces): `npm install` there once.
  */
@@ -133,7 +134,8 @@ if (placeholders) work.placeholders = true;
 else delete work.placeholders;
 
 // The client's own file, ../peoplebrands/<client>/work.json, holds what the preview says about this work:
-// its title, its pricing and the story (why this client needs this site). It replaces those three here.
+// its title, its pricing, the intro (the first screen's line to the client) and the story (why this client needs
+// this site). It replaces those four here.
 const about = path.resolve(appDir, "..", "work.json");
 let told = "no work.json yet: the title is the page's, there is no story";
 if (existsSync(about)) {
@@ -165,12 +167,17 @@ if (existsSync(about)) {
       if (problems.length) problems.push("(the full version is published with --full, only when Ivan asks for it)");
     }
   }
+  // The intro is one large line on an otherwise empty screen: a sentence, not a paragraph.
+  if (own.intro) {
+    if (typeof own.intro.text !== "string" || !own.intro.text.trim()) problems.push('"intro" needs a "text" (one sentence to the client)');
+    else if (own.intro.text.length > 100) problems.push(`the intro is ${own.intro.text.length} characters: keep it under 80 (100 at most)`);
+  }
   if (problems.length) fail(`${client}/work.json: ${problems.join("; ")}`);
-  for (const key of ["title", "pricing", "story"]) {
+  for (const key of ["title", "pricing", "intro", "story"]) {
     if (own[key]) work[key] = own[key];
     else if (key !== "title") delete work[key];
   }
-  told = `from ${client}/work.json: title${own.pricing ? ", pricing" : ""}${own.story ? `, story (${own.story.chapters.length} chapters)` : ", no story"}`;
+  told = `from ${client}/work.json: title${own.pricing ? ", pricing" : ""}${own.intro ? ", intro" : ", no intro"}${own.story ? `, story (${own.story.chapters.length} chapters)` : ", no story"}`;
 }
 writeFileSync(worksFile, JSON.stringify(works, null, 2) + "\n");
 

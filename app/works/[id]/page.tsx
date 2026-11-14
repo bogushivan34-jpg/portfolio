@@ -12,7 +12,8 @@ export function generateMetadata({ params }: { params: { id: string } }): Metada
   const work = works.find((w) => w.id === params.id);
   return {
     title: work ? `${work.title.ru} · превью` : "Превью",
-    // client previews are private: never indexed, never followed
+    // client previews are private, and the sample with its prices is reached only from the legal documents:
+    // never indexed, never followed
     robots: { index: false, follow: false },
   };
 }

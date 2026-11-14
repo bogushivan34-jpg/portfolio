@@ -1,0 +1,280 @@
+/*
+ * The motion of the plans (components/Plans.tsx) in the pricing card of a client's preview: the small card over
+ * Ivan's photo (components/PreviewPopup.tsx). Everything here is sized for that card, about 360px of column.
+ *
+ * How it is put together:
+ *  - Every resting style is the FINISHED state. Motion is only ever added on top, as animations that start from
+ *    an earlier state (`from` keyframes, filled backwards over their delay). So with reduced motion or in an old
+ *    browser, the plans simply stand there complete.
+ *  - Plans.tsx marks each block with data-view: "in" (play: it is in sight as the card opens, or has just been
+ *    scrolled to), "armed" (further down, waiting: hidden) or "static" (no motion: reduced motion).
+ *  - Timing: --t is when a block starts, --d a part's own extra delay, --j a line's place in its list,
+ *    --c a character's place in the price, --k a stroke's place in its icon.
+ *  - Only `opacity`, `translate` and `scale` move, plus the strokes of the small icons drawing themselves.
+ */
+
+.plans {
+  display: grid;
+  gap: 12px;
+}
+
+/* ───────────────────────── entrance ───────────────────────── */
+
+[data-view="armed"].pr-rise,
+[data-view="armed"] .pr-rise {
+  opacity: 0;
+}
+
+/* on paper nothing waits for a scroll */
+@media print {
+  [data-view="armed"].pr-rise,
+  [data-view="armed"] .pr-rise {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* a block comes up into place */
+  [data-view="in"].pr-rise,
+  [data-view="in"] .pr-rise {
+    animation: pr-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    animation-delay: calc(var(--t, 0ms) + var(--d, 0ms));
+  }
+
+  /* the plan's level: its bars grow one after another */
+  [data-view="in"] .pl-meter i {
+    animation: pl-grow 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) backwards;
+    animation-delay: calc(var(--t, 0ms) + 220ms + var(--k, 0) * 70ms);
+  }
+
+  /* the price: each character comes up from behind the baseline */
+  [data-view="in"] .pr-char > span {
+    animation: pr-char 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    animation-delay: calc(var(--t, 0ms) + 180ms + var(--c, 0) * 28ms);
+  }
+
+  /* the rule under the heading draws itself from the left */
+  [data-view="in"] .pl-rule {
+    animation: pl-rule 0.7s cubic-bezier(0.65, 0, 0.35, 1) backwards;
+    animation-delay: calc(var(--t, 0ms) + 260ms);
+  }
+
+  /* the list: line after line, each icon drawing itself as its line arrives */
+  [data-view="in"] .pr-line {
+    animation: pr-line 0.55s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    animation-delay: calc(var(--t, 0ms) + 340ms + var(--j, 0) * 60ms);
+  }
+
+  [data-view="in"] .pr-line .pl-tile {
+    animation: pl-pop 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) backwards;
+    animation-delay: calc(var(--t, 0ms) + 340ms + var(--j, 0) * 60ms);
+  }
+
+  [data-view="in"] .pr-line .pl-icon path {
+    animation: pr-draw 0.6s cubic-bezier(0.65, 0, 0.35, 1) backwards;
+    animation-delay: calc(var(--t, 0ms) + 480ms + var(--j, 0) * 60ms + var(--k, 0) * 110ms);
+  }
+
+  /* the link to choose the plan arrives last */
+  [data-view="in"] .plan-cta {
+    animation: pr-line 0.55s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    animation-delay: calc(var(--t, 0ms) + 420ms + var(--j, 0) * 60ms);
+  }
+}
+
+@keyframes pr-rise {
+  from {
+    opacity: 0;
+    translate: 0 16px;
+  }
+}
+
+@keyframes pr-char {
+  from {
+    translate: 0 110%;
+  }
+}
+
+@keyframes pr-line {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+
+@keyframes pr-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@keyframes pl-grow {
+  from {
+    scale: 1 0;
+  }
+}
+
+@keyframes pl-rule {
+  from {
+    scale: 0 1;
+  }
+}
+
+@keyframes pl-pop {
+  from {
+    scale: 0.6;
+  }
+}
+
+/* ───────────────────────── the parts ───────────────────────── */
+
+.pr-char {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  /* room around the glyph, so the mask never clips it at rest */
+  padding-block: 0.06em;
+}
+
+.pr-char > span {
+  display: inline-block;
+}
+
+/* Three small bars beside the name: which of the three plans this is */
+.pl-meter {
+  display: inline-flex;
+  flex: none;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+
+.pl-meter i {
+  width: 3px;
+  border-radius: 1.5px;
+  background: #e3e1dc;
+  transform-origin: center bottom;
+}
+
+.pl-meter i:nth-child(1) {
+  height: 5px;
+}
+
+.pl-meter i:nth-child(2) {
+  height: 8.5px;
+}
+
+.pl-meter i:nth-child(3) {
+  height: 12px;
+}
+
+.pl-meter[data-level="1"] i:nth-child(-n + 1),
+.pl-meter[data-level="2"] i:nth-child(-n + 2),
+.pl-meter[data-level="3"] i {
+  background: #1d5a43;
+}
+
+.pl-rule {
+  display: block;
+  height: 1px;
+  background: #e3e1dc;
+  transform-origin: left center;
+}
+
+/* The tile an icon sits on */
+.pl-tile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-top: -2px;
+  border-radius: 8px;
+  background: #e8f1ec;
+  color: #1d5a43;
+}
+
+.pl-tile[data-tone="ink"] {
+  background: #15171a;
+  color: #ffffff;
+}
+
+.pl-icon {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+/* each stroke is one dash as long as itself: at rest it shows whole, and it draws by sliding in */
+.pl-icon path {
+  stroke-dasharray: 1;
+}
+
+/* ───────────────────────── the card ───────────────────────── */
+
+/* The spotlight's size is registered so that it can grow and shrink smoothly; its position follows the pointer
+   at once and needs no registration. */
+@property --glow-in {
+  syntax: "<length-percentage>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --glow-out {
+  syntax: "<length-percentage>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+.plan {
+  position: relative;
+  padding: 18px 18px 16px;
+  border: 1px solid #e3e1dc;
+  border-radius: 14px;
+  background: #ffffff;
+  transition:
+    box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s ease-out;
+}
+
+@media (hover: hover) {
+  .plan:hover {
+    border-color: #d5d2ca;
+    box-shadow: 0 14px 30px -18px rgba(21, 23, 26, 0.3);
+    --glow-in: 20px;
+    --glow-out: 200px;
+  }
+}
+
+/* A green edge that lights up around the pointer: decoration over a card that is complete without it. */
+.plan-glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 1px solid #1d5a43;
+  box-shadow: inset 0 0 30px rgba(29, 90, 67, 0.06);
+  pointer-events: none;
+  transition:
+    --glow-in 0.3s ease-in-out,
+    --glow-out 0.3s ease-in-out;
+  -webkit-mask-image: radial-gradient(circle at var(--mx, 50%) var(--my, 0%), black var(--glow-in, 0%), transparent var(--glow-out, 0%));
+  mask-image: radial-gradient(circle at var(--mx, 50%) var(--my, 0%), black var(--glow-in, 0%), transparent var(--glow-out, 0%));
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plan-glow {
+    transition: none !important;
+  }
+}
+
+.plan-cta svg {
+  transition: translate 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .plan-cta:hover svg {
+    translate: 4px 0;
+  }
+}

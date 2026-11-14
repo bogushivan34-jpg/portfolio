@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import PreviewIntro, { type IntroState } from "@/components/PreviewIntro";
 import PreviewNote, { END, TOP, buildNotes } from "@/components/PreviewNote";
 import PreviewPopup, { type PopupView } from "@/components/PreviewPopup";
 import { Lang, preview as t, profile } from "@/data/content";
@@ -16,11 +17,28 @@ const END_MS = 1500;
 /** After the client steps to a note, the site scrolls there: the notes it passes on the way are skipped. */
 const STEP_QUIET_MS = 1200;
 
+/** How long the intro may take to fade off the site before it is simply removed (its own fade is under a second). */
+const INTRO_OUT_MS = 1400;
+
+/** Whether this browser has been past the intro of this preview before. */
+const introKey = (id: string) => `intro-seen:${id}`;
+const sawIntro = (id: string) => {
+  try {
+    return window.localStorage.getItem(introKey(id)) === "1";
+  } catch {
+    return false; // storage is closed to us: the intro shows each time
+  }
+};
+
 /*
  * A client's site concept inside the portfolio. The site is the page: it fills the whole window, with no bar or
  * frame around it. What Ivan has to say comes as small notes in the bottom-right corner, beside his photo, one at
  * a time: the note about the part of the site in view, changing as the client scrolls. The photo opens a short
  * menu: the notes again, feedback and pricing, each in a small card over the corner.
+ *
+ * A work with an `intro` opens on a white screen with one line to the client and a button (PreviewIntro.tsx); the
+ * site loads underneath and is shown when the button is pressed. That is for the first visit: afterwards this
+ * browser goes straight to the site (add ?intro to the link to see it again).
  */
 export default function WorkPreview({ work }: { work: Work }) {
   const [lang, setLang] = useState<Lang>("ru");
@@ -30,6 +48,9 @@ export default function WorkPreview({ work }: { work: Work }) {
   const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set()); // notes the client closed
   // notes folded into one line: the client's choice, kept from note to note; on a phone they start folded
   const [folded, setFolded] = useState(false);
+  // the white first screen: not decided yet (blank), on it, fading off the site, or out of the way
+  const [intro, setIntro] = useState<IntroState | "gone">(work.intro ? "wait" : "gone");
+  const revealed = useRef(false); // the client pressed the button (as opposed to never having had an intro)
 
   const frame = useRef<HTMLIFrameElement>(null);
   const launcher = useRef<HTMLButtonElement>(null);
@@ -39,12 +60,40 @@ export default function WorkPreview({ work }: { work: Work }) {
 
   const notes = useMemo(() => buildNotes(work, lang), [work, lang]);
   const anchors = useMemo(() => notes.map((n) => n.anchor).filter((a): a is string => !!a), [notes]);
-  const src = `/previews/${work.id}/index.html`;
+  // a client's concept is built into /previews/<id>/; the sample shows a page of this site, in the same language
+  const src = work.site ? `${work.site}${lang === "en" ? "?lang=en" : ""}` : `/previews/${work.id}/index.html`;
 
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("lang") === "en") setLang("en");
+    const query = new URLSearchParams(window.location.search);
+    if (query.get("lang") === "en") setLang("en");
     setFolded(window.matchMedia("(max-width: 639px)").matches);
-  }, []);
+    // ?open=pricing: the link from the offer and the payment page opens straight on the plans and prices
+    const toPricing = query.get("open") === "pricing";
+    if (toPricing) setOpen("pricing");
+    // the intro is for the first visit: not once it has been seen here (unless ?intro asks for it again)
+    if (work.intro) setIntro(toPricing || (!query.has("intro") && sawIntro(work.id)) ? "gone" : "shown");
+  }, [work.id, work.intro]);
+
+  // «Показать»: remember it, and take the white off the site
+  const reveal = useCallback(() => {
+    try {
+      window.localStorage.setItem(introKey(work.id), "1");
+    } catch {
+      /* no storage: nothing to remember */
+    }
+    revealed.current = true;
+    setIntro(window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "gone" : "leaving");
+  }, [work.id]);
+  const introGone = useCallback(() => setIntro("gone"), []);
+
+  useEffect(() => {
+    if (intro === "leaving") {
+      const timer = setTimeout(introGone, INTRO_OUT_MS); // in case the fade's end is never reported
+      return () => clearTimeout(timer);
+    }
+    // the button is gone with the screen: the focus goes to the site, so the keyboard scrolls it
+    if (intro === "gone" && revealed.current) frame.current?.focus({ preventScroll: true });
+  }, [intro, introGone]);
   useEffect(() => {
     document.documentElement.lang = lang;
   }, [lang]);
@@ -134,6 +183,7 @@ export default function WorkPreview({ work }: { work: Work }) {
   }, [place, notes]);
 
   useEffect(() => {
+    if (intro !== "gone") return; // the notes start once the site is on screen
     const wait = firstNote.current ? FIRST_MS : placed === "end" ? END_MS : SETTLE_MS;
     const timer = setTimeout(
       () => {
@@ -144,7 +194,7 @@ export default function WorkPreview({ work }: { work: Work }) {
       Math.max(wait, quietUntil.current - Date.now()),
     );
     return () => clearTimeout(timer);
-  }, [placed]);
+  }, [placed, intro]);
 
   const scrollSite = useCallback((to: string) => {
     try {
@@ -191,17 +241,29 @@ export default function WorkPreview({ work }: { work: Work }) {
   const menuItem =
     "block w-full rounded-lg px-3 py-2.5 text-left text-[15px] text-ink transition-colors hover:bg-paper focus-visible:bg-paper";
 
+  // while the intro is up, what's under it can't be reached by keyboard or screen reader either
+  const under = intro === "gone" ? {} : ({ inert: "" } as Record<string, string>);
+
   return (
-    <div className="fixed inset-0 bg-white">
+    <div className="fixed inset-0 overflow-hidden bg-white">
       <iframe
         ref={frame}
         src={src}
         title={`${t.frameTitle[lang]}: ${work.title[lang]}`}
-        className="block h-full w-full border-0 bg-white"
+        // "site-settle" stays on after the reveal, so the settling isn't cut short when the intro is removed
+        className={`block h-full w-full border-0 bg-white ${revealed.current ? "site-settle" : ""}`}
+        {...under}
       />
 
+      {work.intro && intro !== "gone" && (
+        <PreviewIntro intro={work.intro} lang={lang} state={intro} onShow={reveal} onGone={introGone} />
+      )}
+
       {/* the corner: the note in view and Ivan's photo; everything else on the screen is the site */}
-      <div className="pointer-events-none fixed inset-x-3 bottom-3 z-20 flex items-end justify-end gap-2.5 sm:inset-x-auto sm:bottom-5 sm:right-5">
+      <div
+        className="pointer-events-none fixed inset-x-3 bottom-3 z-20 flex items-end justify-end gap-2.5 sm:inset-x-auto sm:bottom-5 sm:right-5"
+        {...under}
+      >
         {/* stays in place while notes come and go, so a screen reader reads each new one */}
         <div aria-live="polite" className="flex min-w-0 flex-1 justify-end sm:flex-none">
           {note && (
