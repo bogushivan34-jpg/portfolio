@@ -7,6 +7,7 @@ import PreviewPopup, { type PopupView } from "@/components/PreviewPopup";
 import { Lang, preview as t, profile } from "@/data/content";
 import type { Work } from "@/data/works";
 import { currentAnchor, findAnchor } from "@/lib/siteFrame";
+import { markOwnBrowser, trackShow } from "@/lib/track";
 
 /** How long the client stays on a part of the site before its note comes up, so a fast scroll doesn't flash them. */
 const SETTLE_MS = 450;
@@ -65,6 +66,8 @@ export default function WorkPreview({ work }: { work: Work }) {
 
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
+    // ?me: a link from Ivan's bot. This browser is his, and its «Показать» is never reported (lib/track.ts)
+    if (query.has("me")) markOwnBrowser();
     if (query.get("lang") === "en") setLang("en");
     setFolded(window.matchMedia("(max-width: 639px)").matches);
     // ?open=pricing: the link from the offer and the payment page opens straight on the plans and prices
@@ -74,16 +77,17 @@ export default function WorkPreview({ work }: { work: Work }) {
     if (work.intro) setIntro(toPricing || (!query.has("intro") && sawIntro(work.id)) ? "gone" : "shown");
   }, [work.id, work.intro]);
 
-  // «Показать»: remember it, and take the white off the site
+  // «Показать»: remember it, let Ivan know, and take the white off the site
   const reveal = useCallback(() => {
     try {
       window.localStorage.setItem(introKey(work.id), "1");
     } catch {
       /* no storage: nothing to remember */
     }
+    if (!revealed.current) trackShow({ id: work.id, title: work.title.ru });
     revealed.current = true;
     setIntro(window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "gone" : "leaving");
-  }, [work.id]);
+  }, [work.id, work.title.ru]);
   const introGone = useCallback(() => setIntro("gone"), []);
 
   useEffect(() => {

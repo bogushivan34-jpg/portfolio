@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { WORKS_TOKEN_KEY, markOwnBrowser } from "@/lib/track";
 import type { Locked } from "@/lib/worksLock";
 
 export interface IndexEntry {
@@ -15,8 +16,8 @@ export interface IndexEntry {
   placeholders: boolean;
 }
 
-/** where this browser keeps the token once it has opened the list */
-const STORAGE_KEY = "works-token";
+/** where this browser keeps the token once it has opened the list (the previews read it too: lib/track.ts) */
+const STORAGE_KEY = WORKS_TOKEN_KEY;
 
 const fieldClass =
   "mt-1.5 w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-[16px] text-ink placeholder:text-muted/70 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20";
@@ -75,6 +76,9 @@ export default function WorksIndex({ locked }: { locked: Locked | null }) {
   const open = (list: IndexEntry[]) => {
     setEntries([...list].sort((a, b) => b.updated.localeCompare(a.updated) || b.published.localeCompare(a.published)));
     setState("open");
+    // the token opened the list, so this is Ivan's browser: its «Показать» on a preview is never reported, even
+    // after "forget"
+    markOwnBrowser();
   };
 
   // a token kept from before opens the list straight away; one that no longer fits is dropped

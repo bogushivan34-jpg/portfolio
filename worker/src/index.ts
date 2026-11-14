@@ -6,6 +6,13 @@
  * POST / with JSON { kind: "feedback", work: { id, title }, message, name?, contact?, consent, website? }
  *   → feedback from a client on a site preview at ivanbogush.ru/works/<id>: the message is required, name and
  *     contact are optional (the preview already says who it's for).
+ * POST / with JSON { kind: "event", event: "show", work: { id, title } }
+ *   → a client pressed «Показать» on their preview's first screen. Nothing is emailed; it only goes to the bot.
+ *
+ * Ivan's Telegram bot (Desktop/Bots/portfolio-leads-bot, @portfolioleads2bot) gets every message and every
+ * «Показать», with the visitor's address: it notifies him and counts unique visitors per preview. The Worker posts
+ * them to LEADS_URL with the LEADS_KEY secret, after answering (waitUntil), so the form never waits on the bot. With
+ * either unset nothing goes to the bot. A message reaches the bot even when Resend fails, marked `mailed: false`.
  *
  * Answers:
  *   200 { ok: true }                 sent (or a bot filled the hidden `website` field: we pretend and send nothing)
@@ -22,7 +29,7 @@
  * Cloudflare down. Cloudflare then sees only the relay's address, so the relay sends the visitor's along as X-Relay-IP,
  * signed with X-Relay-Key. With the right key (the RELAY_KEY secret) the rate limit counts that address instead.
  *
- * Nothing is stored: the message goes straight to the mailbox.
+ * The Worker stores nothing: the message goes to the mailbox and the bot; the bot keeps the click counts.
  */
 
 export interface Env {
@@ -32,7 +39,14 @@ export interface Env {
 	MAIL_FROM: string;
 	ALLOWED_ORIGINS: string;
 	LIMITER?: RateLimit;
+	/** the leads bot's endpoint, e.g. https://form.ivanbogush.ru/bot/event */
+	LEADS_URL?: string;
+	/** its key (a secret; the bot has the same one in /etc/portfolio-leads-bot/env) */
+	LEADS_KEY?: string;
 }
+
+/** The part of the runtime's context the Worker uses: work that may finish after the answer has gone. */
+type Later = Pick<ExecutionContext, "waitUntil">;
 
 interface Enquiry {
 	kind: "enquiry" | "feedback";
@@ -116,6 +130,30 @@ export function parseEnquiry(body: Record<string, unknown>): Enquiry | { error: 
 	return { kind: "enquiry", name, contact, profession: clip(body.profession, LIMITS.profession), needs, message, lang };
 }
 
+/** { kind: "event", event: "show", work: { id, title } }: the only event there is so far. */
+export function parseEvent(body: Record<string, unknown>): { work: { id: string; title: string } } | { error: string } {
+	if (body.event !== "show") return { error: "bad_event" };
+	const w = (body.work ?? {}) as Record<string, unknown>;
+	const id = clip(w.id, 16);
+	if (!WORK_ID.test(id)) return { error: "bad_work" };
+	return { work: { id, title: clip(w.title, LIMITS.workTitle) || id } };
+}
+
+/** Hands an event to the leads bot. Never throws: the bot is a convenience, the form must not depend on it. */
+export async function tellBot(env: Env, event: Record<string, unknown>): Promise<void> {
+	if (!env.LEADS_URL || !env.LEADS_KEY) return;
+	try {
+		const res = await fetch(env.LEADS_URL, {
+			method: "POST",
+			headers: { "Content-Type": "application/json", "X-Leads-Key": env.LEADS_KEY },
+			body: JSON.stringify(event),
+		});
+		if (!res.ok) console.error("leads bot refused", res.status);
+	} catch (err) {
+		console.error("leads bot unreachable", err);
+	}
+}
+
 export function buildEmail(e: Enquiry, now = new Date()) {
 	const when = now.toLocaleString("ru-RU", { timeZone: "Europe/Moscow", dateStyle: "long", timeStyle: "short" });
 	const feedback = e.kind === "feedback";
@@ -183,7 +221,9 @@ async function sendWithResend(env: Env, mail: ReturnType<typeof buildEmail>): Pr
 }
 
 export default {
-	async fetch(request: Request, env: Env): Promise<Response> {
+	async fetch(request: Request, env: Env, ctx?: Later): Promise<Response> {
+		// after the answer when the runtime allows it (tests call without a context: then it just runs)
+		const later = (work: Promise<void>) => (ctx ? ctx.waitUntil(work) : void work);
 		const origin = allowedOrigin(request, env);
 
 		if (request.method === "OPTIONS") {
@@ -223,17 +263,30 @@ export default {
 		// Honeypot: people never see the `website` field, bots fill it in. Pretend it worked.
 		if (clip(body.website, 200)) return json({ ok: true }, 200, origin);
 
+		const ip = visitorIp(request, env);
+
+		if (body.kind === "event") {
+			const event = parseEvent(body);
+			if ("error" in event) return json(event, 400, origin);
+			later(tellBot(env, { type: "show", ip, work: event.work }));
+			return json({ ok: true }, 200, origin);
+		}
+
 		const enquiry = parseEnquiry(body);
 		if ("error" in enquiry) return json(enquiry, 400, origin);
 
-		if (!env.RESEND_API_KEY) return json({ error: "not_configured" }, 503, origin);
-
-		try {
-			const sent = await sendWithResend(env, buildEmail(enquiry));
-			return sent ? json({ ok: true }, 200, origin) : json({ error: "send_failed" }, 502, origin);
-		} catch (err) {
-			console.error("resend unreachable", err);
-			return json({ error: "send_failed" }, 502, origin);
+		let sent = false;
+		if (env.RESEND_API_KEY) {
+			try {
+				sent = await sendWithResend(env, buildEmail(enquiry));
+			} catch (err) {
+				console.error("resend unreachable", err);
+			}
 		}
+		const { kind, ...fields } = enquiry;
+		later(tellBot(env, { type: kind, ip, ...fields, mailed: sent }));
+
+		if (!env.RESEND_API_KEY) return json({ error: "not_configured" }, 503, origin);
+		return sent ? json({ ok: true }, 200, origin) : json({ error: "send_failed" }, 502, origin);
 	},
 } satisfies ExportedHandler<Env>;

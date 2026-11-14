@@ -2,7 +2,9 @@
 
 Russian ISPs slow Cloudflare's addresses down, so the contact form posts to **form.ivanbogush.ru**: Caddy on a
 server outside Cloudflare that passes each request on to the Worker at
-`ivanbogush-contact.bogushivan34.workers.dev`. Nothing runs or is stored on the relay. If the relay can't be reached
+`ivanbogush-contact.bogushivan34.workers.dev`. The relay itself stores nothing. One path is the exception:
+`form.ivanbogush.ru/bot/*` goes to Ivan's leads bot on the same server (`Desktop/Bots/portfolio-leads-bot`,
+127.0.0.1:8790), which the Worker calls with each message and each «Показать» on a preview. If the relay can't be reached
 at all, the form tries workers.dev directly (`formEndpoint` in `../../data/content.ts`).
 
 It runs on the same server as the trouvere.ru relay (45.136.228.66, `trouvere-backend/relay`), as its own file:

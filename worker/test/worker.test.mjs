@@ -145,6 +145,83 @@ test("feedback on a preview: message required, name and contact optional", async
 	assert.equal(body.reply_to, undefined);
 });
 
+// ─── the leads bot ───
+
+const LEADS = { LEADS_URL: "https://form.example/bot/event", LEADS_KEY: "L".repeat(64) };
+const toBot = () => sent.filter((s) => s.url === LEADS.LEADS_URL);
+
+/** Posts like the runtime would, and waits for what the Worker hands on after answering. */
+async function postAndSettle(body, env) {
+	const pending = [];
+	const res = await worker.fetch(
+		new Request("https://w.example/", {
+			method: "POST",
+			headers: { "Content-Type": "application/json", Origin: ORIGIN, "CF-Connecting-IP": "1.2.3.4" },
+			body: JSON.stringify(body),
+		}),
+		env,
+		{ waitUntil: (p) => pending.push(p) },
+	);
+	await Promise.all(pending);
+	return res;
+}
+
+test("«Показать» goes to the bot only, with the visitor's address", async () => {
+	const res = await postAndSettle({ kind: "event", event: "show", work: { id: "xrukpk", title: "Концепция сайта для Диляры Солей" } }, { ...baseEnv, ...LEADS });
+	assert.equal(res.status, 200);
+	assert.equal(sent.length, 1, "no email");
+	const [call] = toBot();
+	assert.equal(call.headers["X-Leads-Key"], LEADS.LEADS_KEY);
+	assert.deepEqual(call.body, { type: "show", ip: "1.2.3.4", work: { id: "xrukpk", title: "Концепция сайта для Диляры Солей" } });
+});
+
+test("a bad event is refused and nothing is sent", async () => {
+	const env = { ...baseEnv, ...LEADS };
+	assert.equal((await postAndSettle({ kind: "event", event: "hack", work: { id: "xrukpk" } }, env)).status, 400);
+	assert.equal((await postAndSettle({ kind: "event", event: "show", work: { id: "../x" } }, env)).status, 400);
+	assert.equal(sent.length, 0);
+});
+
+test("messages go to the bot too, marked whether the email went", async () => {
+	const env = { ...baseEnv, ...LEADS };
+	assert.equal((await postAndSettle(feedback, env)).status, 200);
+	const fb = toBot()[0].body;
+	assert.equal(fb.type, "feedback");
+	assert.deepEqual(fb.work, feedback.work);
+	assert.equal(fb.message, feedback.message);
+	assert.equal(fb.mailed, true);
+
+	sent = [];
+	resendStatus = 500; // the bot's answer is faked with the same status, and it doesn't matter: nothing waits on it
+	assert.equal((await postAndSettle(good, env)).status, 502);
+	const enq = toBot()[0].body;
+	assert.equal(enq.type, "enquiry");
+	assert.equal(enq.name, "Анна");
+	assert.equal(enq.mailed, false);
+});
+
+test("without a Resend key the message still reaches the bot", async () => {
+	const { RESEND_API_KEY, ...noKey } = baseEnv;
+	assert.equal((await postAndSettle(good, { ...noKey, ...LEADS })).status, 503);
+	assert.equal(toBot()[0].body.mailed, false);
+});
+
+test("nothing goes to the bot without LEADS_URL and LEADS_KEY", async () => {
+	await postAndSettle(good, { ...baseEnv, LEADS_URL: LEADS.LEADS_URL });
+	await postAndSettle({ kind: "event", event: "show", work: { id: "xrukpk" } }, baseEnv);
+	assert.equal(toBot().length, 0);
+});
+
+test("an unreachable bot never breaks the form", async () => {
+	const real = globalThis.fetch;
+	globalThis.fetch = async (url, init) => {
+		if (url === LEADS.LEADS_URL) throw new TypeError("connection refused");
+		return real(url, init);
+	};
+	assert.equal((await postAndSettle(good, { ...baseEnv, ...LEADS })).status, 200);
+	assert.equal((await postAndSettle({ kind: "event", event: "show", work: { id: "xrukpk" } }, { ...baseEnv, ...LEADS })).status, 200);
+});
+
 test("feedback is refused without a message, consent or a valid work id", async () => {
 	assert.equal((await post({ ...feedback, message: " " })).status, 400);
 	assert.equal((await post({ ...feedback, consent: false })).status, 400);

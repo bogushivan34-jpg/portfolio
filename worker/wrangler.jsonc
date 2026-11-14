@@ -7,10 +7,13 @@
 	"compatibility_date": "2026-10-01",
 	"workers_dev": true,
 	"observability": { "enabled": true },
-	// Public settings. The secrets are RESEND_API_KEY and RELAY_KEY (the form.ivanbogush.ru relay's key, relay/README.md),
-	// set with `npx wrangler secret put <NAME>` (and in .dev.vars for `wrangler dev`). Without RESEND_API_KEY it answers 503 and the form offers
+	// Public settings. The secrets are RESEND_API_KEY, RELAY_KEY (the form.ivanbogush.ru relay's key, relay/README.md)
+	// and LEADS_KEY (the leads bot's key, Desktop/Bots/portfolio-leads-bot), set with `npx wrangler secret put <NAME>`
+	// (and in .dev.vars for `wrangler dev`). Without RESEND_API_KEY it answers 503 and the form offers
 	// "send via Telegram / by email" with the message already filled in.
 	"vars": {
+		// The leads bot, on the relay's server: every message and every «Показать» on a preview go here too.
+		"LEADS_URL": "https://form.ivanbogush.ru/bot/event",
 		"MAIL_TO": "bogushiv@mail.ru",
 		// The sending address must be on a domain verified in Resend.
 		"MAIL_FROM": "Сайт ivanbogush.ru <form@ivanbogush.ru>",

@@ -15,7 +15,10 @@
 # /etc/caddy/portfolio-relay.key (root only). The Worker needs the same key as its RELAY_KEY secret; from
 # portfolio/worker, without the key ever showing on screen:
 #   ssh root@<ip> cat /etc/caddy/portfolio-relay.key | npx wrangler secret put RELAY_KEY
-# Without a terminal: FORM_RELAY_KEY=<key> sh portfolio-relay.sh. Run it again any time.
+# Without a terminal: FORM_RELAY_KEY=<key> sh portfolio-relay.sh (or no key at all: it keeps this server's).
+# Run it again any time.
+#
+# form.ivanbogush.ru/bot/* goes to the leads bot on this server instead (Desktop/Bots/portfolio-leads-bot).
 # Optional: FORM_DOMAIN (default form.ivanbogush.ru), FORM_UPSTREAM (default ivanbogush-contact.bogushivan34.workers.dev).
 set -eu
 
@@ -41,6 +44,10 @@ upstream=${upstream:-ivanbogush-contact.bogushivan34.workers.dev}
 for name in "$domain" "$upstream"; do
 	case $name in "" | *[!a-z0-9.-]*) fail "Not a domain name: $name" ;; esac
 done
+# the leads bot's local port (its PORT, 8790 unless /etc/portfolio-leads-bot/env says otherwise)
+BOT_PORT=$(sed -n 's/^PORT=//p' /etc/portfolio-leads-bot/env 2>/dev/null || true)
+BOT_PORT=${BOT_PORT:-8790}
+case $BOT_PORT in *[!0-9]*) fail "Not a port: $BOT_PORT" ;; esac
 
 # ───────────────────────────── the key ─────────────────────────────
 
@@ -138,17 +145,26 @@ fi
 # The key below is the Worker's RELAY_KEY secret, so this file is readable by root and Caddy only.
 
 $domain {
-	reverse_proxy https://$upstream {
-		# Cloudflare only answers for hostnames it serves, so ask for the Worker's, in TLS (SNI) and in Host.
-		header_up Host $upstream
-		transport http {
-			tls_server_name $upstream
-		}
+	# Ivan's leads bot on this server (Desktop/Bots/portfolio-leads-bot): the Worker hands it each message and each
+	# «Показать» on a preview here, with its own key, which the bot checks. Without the bot this answers 502 and the
+	# Worker carries on.
+	handle /bot/* {
+		reverse_proxy 127.0.0.1:$BOT_PORT
+	}
 
-		# Cloudflare sees only this server's address. The visitor's goes along, signed with the relay key, so the
-		# Worker can use it for its rate limit (anyone could write X-Relay-IP; only the relay knows the key).
-		header_up X-Relay-IP {remote_host}
-		header_up X-Relay-Key "$key"
+	handle {
+		reverse_proxy https://$upstream {
+			# Cloudflare only answers for hostnames it serves, so ask for the Worker's, in TLS (SNI) and in Host.
+			header_up Host $upstream
+			transport http {
+				tls_server_name $upstream
+			}
+
+			# Cloudflare sees only this server's address. The visitor's goes along, signed with the relay key, so the
+			# Worker can use it for its rate limit (anyone could write X-Relay-IP; only the relay knows the key).
+			header_up X-Relay-IP {remote_host}
+			header_up X-Relay-Key "$key"
+		}
 	}
 }
 SITEFILE

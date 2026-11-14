@@ -1,7 +1,11 @@
 # Contact form worker
 
 A Cloudflare Worker (`ivanbogush-contact`) behind the form at the bottom of ivanbogush.ru. It checks the enquiry,
-then emails it to `MAIL_TO` through [Resend](https://resend.com) from `MAIL_FROM`. Nothing is stored.
+then emails it to `MAIL_TO` through [Resend](https://resend.com) from `MAIL_FROM`. The Worker stores nothing.
+
+- **Telegram:** every message, and every press of «Показать» on a preview's first screen (`kind: "event"`), also
+  goes to Ivan's leads bot (`LEADS_URL`, with the `LEADS_KEY` secret), after the answer, so the form never waits on
+  it. The bot (`Desktop/Bots/portfolio-leads-bot`) notifies him and counts unique visitors per preview.
 
 - **Reply** goes to the visitor when they left an email address as their contact (`reply_to`).
 - **Spam:** a hidden honeypot field, at most 3 submissions per IP per minute (`ratelimits` binding), and only pages
@@ -13,7 +17,8 @@ then emails it to `MAIL_TO` through [Resend](https://resend.com) from `MAIL_FROM
 - **Visitors in Russia** reach it through the relay at form.ivanbogush.ru ([relay/](relay/README.md)), because Russian
   ISPs slow Cloudflare down. The form falls back to workers.dev only when the relay can't be reached.
 
-Settings are in `wrangler.jsonc` (`vars`). The secrets are `RESEND_API_KEY` and `RELAY_KEY` (the relay's key).
+Settings are in `wrangler.jsonc` (`vars`). The secrets are `RESEND_API_KEY`, `RELAY_KEY` (the relay's key) and
+`LEADS_KEY` (the leads bot's; its README says how to set it).
 
 ## Run locally
 
