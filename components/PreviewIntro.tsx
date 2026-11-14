@@ -1,17 +1,23 @@
 "use client";
 
-import { useEffect, useRef, type TransitionEvent } from "react";
-import { Lang, preview as t, profile } from "@/data/content";
+import { useEffect, useRef, type CSSProperties, type TransitionEvent } from "react";
+import { Lang, preview as t } from "@/data/content";
 import type { Intro } from "@/data/works";
 import "./preview-intro.css";
 
 /** "wait": the page hasn't decided yet whether to show it (blank white) · "shown" · "leaving": fading off the site */
 export type IntroState = "wait" | "shown" | "leaving";
 
+/** when the first word comes in, and the pace after it (seconds) */
+const START = 0.35;
+const WORD = 0.13;
+const BREATH = 0.24;
+const STOP = 0.4;
+
 /*
- * The first thing a client sees at their preview link: a white page with one large line to them by name, which
- * opens a question the site answers, and one button. The site is already loading underneath; the button takes
- * the white off it (preview-intro.css). Like a slide of a set-up screen: nothing else on it but who is speaking.
+ * The first thing a client sees at their preview link: one centred line on a white page, greeting on its own
+ * line, which opens a question the site answers, and the button as its last words. The site is already loading
+ * underneath; the button takes the page off it (preview-intro.css).
  *
  * WorkPreview.tsx decides when it shows (first visit only) and makes the site behind it inert meanwhile. Until it
  * has decided, the page as it arrives from the server is blank white: a returning client never glimpses the line.
@@ -42,6 +48,29 @@ export default function PreviewIntro({
     if (state === "leaving" && e.target === e.currentTarget && e.propertyName === "opacity") onGone();
   };
 
+  // "Диляра, я придумал…": the name it opens with is the greeting, set on a line of its own
+  const [, hello, rest] = intro.text.match(/^([^\s,]{2,24},)\s+([\s\S]+)$/) ?? [];
+
+  /*
+   * Said, not shown: each word comes in on its own, at an easy speaking pace, with a breath after a comma and a
+   * longer one after a full stop. The button comes in last, once the line has been said.
+   */
+  let at = START;
+  const say = (text: string) =>
+    text.split(/\s+/).filter(Boolean).flatMap((word, i) => {
+      const delay = at;
+      at += WORD + (/[.!?…]$/.test(word) ? STOP : /[,;:—–]$/.test(word) ? BREATH : 0);
+      return [i ? " " : null, <span key={i} className="intro-word" style={{ animationDelay: `${delay.toFixed(2)}s` }}>{word}</span>];
+    });
+  const line = hello ? (
+    <>
+      <span className="intro-hello">{say(hello)}</span> {say(rest)}
+    </>
+  ) : (
+    say(intro.text)
+  );
+  const buttonDelay = at + BREATH;
+
   return (
     <section className="intro" data-state={state} aria-labelledby="intro-text" onTransitionEnd={onEnd}>
       {/* without scripts the button can't work: show the site instead */}
@@ -50,22 +79,26 @@ export default function PreviewIntro({
       </noscript>
 
       <div className="intro-body">
-        <h1 id="intro-text" className="intro-text">
-          {intro.text}
-        </h1>
-        <button ref={button} type="button" disabled={state !== "shown"} onClick={onShow} className="intro-go btn gap-2 px-7 py-3.5 text-[17px]">
-          {intro.button ?? t.intro.show[lang]}
-          <svg aria-hidden="true" viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 8h10M9 4l4 4-4 4" />
-          </svg>
-        </button>
+        {/* the button is the last words of the line: same type, set right after the full stop */}
+        <div className="intro-text">
+          <h1 id="intro-text">{line}</h1>{" "}
+          <button
+            ref={button}
+            type="button"
+            disabled={state !== "shown"}
+            onClick={onShow}
+            className="intro-go"
+            style={{ "--at": `${buttonDelay.toFixed(2)}s` } as CSSProperties}
+          >
+            {intro.button ?? t.intro.show[lang]}
+            <span className="intro-go-mark">
+              <svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2.5 8h11M9 3.5 13.5 8 9 12.5" />
+              </svg>
+            </span>
+          </button>
+        </div>
       </div>
-
-      <p className="intro-sign">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/images/ivan_bogush_avatar.jpg" alt="" width={28} height={28} />
-        {profile.name[lang]}
-      </p>
     </section>
   );
 }
