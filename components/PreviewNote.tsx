@@ -130,8 +130,8 @@ export default function PreviewNote({
       aria-label={`${n.note[lang]} ${counter}`}
       className="note-in pointer-events-auto flex max-h-[min(440px,calc(100dvh-96px))] min-w-0 flex-1 flex-col rounded-2xl border border-line bg-white shadow-[0_8px_28px_rgba(21,23,26,0.16)] sm:w-[320px] sm:flex-none"
     >
-      <div className="flex shrink-0 items-center gap-0.5 pl-4 pr-1.5 pt-1.5">
-        <span aria-hidden="true" className="flex-1" />
+      <div className="flex shrink-0 items-start gap-0.5 pl-4 pr-1.5 pt-2">
+        <p className="mr-2 min-w-0 flex-1 py-1 text-[15px] font-semibold leading-snug text-ink">{note.title}</p>
         <button
           type="button"
           onClick={() => onStep(index - 1)}
@@ -159,7 +159,6 @@ export default function PreviewNote({
       </div>
 
       <div className="min-h-0 overflow-y-auto overscroll-contain px-4 pb-3.5">
-        <p className="text-[15px] font-semibold leading-snug text-ink">{note.title}</p>
         {note.text.map((p, i) => (
           <p key={i} className="mt-1 text-[14px] leading-[1.5] text-body">
             {p}
