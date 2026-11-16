@@ -3,14 +3,17 @@
  * Publishes a client site concept as a preview on the portfolio: ivanbogush.ru/works/<id>.
  *
  *   node scripts/add-work.mjs <client>                 e.g. disoley.ru  (the folder in ../peoplebrands)
- *   node scripts/add-work.mjs <client> --id k7m2qx     pick the id yourself
+ *   node scripts/add-work.mjs <client> --id anna-ivanova-2   pick the id yourself (two clients with one name)
  *   node scripts/add-work.mjs <client> --placeholders  stand-in pictures for missing images (local testing only)
  *   node scripts/add-work.mjs <client> --full          allow the long story (a client already talking to Ivan)
+ *   node scripts/add-work.mjs <client> --keep-build    don't rebuild the site: only work.json changed (or the name)
  *
  * It builds ../peoplebrands/<client>/app with that site's own Vite config, except as normal files instead of one
  * inlined HTML (vite-plugin-singlefile is left out): pictures stay separate files, so git keeps each one once however
- * often the site is republished. The build goes to public/previews/<id>/, marked noindex, and the work is added to
- * data/works.json (or its date updated). Run it again after changing the site: the id stays the same.
+ * often the site is republished. The build goes to public/previews/<id>/, marked noindex, a screenshot of its first
+ * screen to public/cards/<id>.jpg (the picture the link unfurls with), and the work is added to data/works.json (or
+ * its date updated). The id is the professional's name from work.json ("Dilyara Soley" → /works/dilyara-soley):
+ * run it again after changing the site and the id stays; change the name and the old link is removed.
  *
  * The work's title, pricing, intro (the line on the first screen) and story (why this client needs this site) are
  * read from the client's own file, ../peoplebrands/<client>/work.json, on every run: edit them there, not in
@@ -20,10 +23,10 @@
  */
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
-import { existsSync, readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, readdirSync, statSync, rmSync, renameSync, mkdirSync, createReadStream } from "node:fs";
+import http from "node:http";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { randomInt } from "node:crypto";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const worksFile = path.join(root, "data", "works.json");
@@ -33,6 +36,7 @@ const client = args.find((a) => !a.startsWith("--") && args[args.indexOf(a) - 1]
 const wantedId = args.includes("--id") ? args[args.indexOf("--id") + 1] : undefined;
 const placeholders = args.includes("--placeholders");
 const full = args.includes("--full");
+const keepBuild = args.includes("--keep-build");
 const fail = (msg) => {
   console.error(`\n!! ${msg}`);
   process.exit(1);
@@ -51,19 +55,62 @@ if (existsSync(checker)) {
   }
 }
 
-// ─── the id ───
+// The client's own file, ../peoplebrands/<client>/work.json: read here for the name the link is made of, and
+// checked and copied into data/works.json after the build.
+const about = path.resolve(appDir, "..", "work.json");
+let own;
+if (existsSync(about)) {
+  try {
+    own = JSON.parse(readFileSync(about, "utf8"));
+  } catch (e) {
+    fail(`${client}/work.json isn't valid JSON: ${e.message}`);
+  }
+}
+
+// ─── the id: the professional's name ───
+// The link is sent to someone who has never heard of Ivan: /works/dilyara-soley reads as made for them, where a
+// random /works/xrukpk looked like a phishing link (Ivan, 17 November 2026). The name comes from work.json's
+// "name", in Latin letters as the client writes it ("Dilyara Soley"); --id overrides it, e.g. for two clients
+// with the same name.
 const works = existsSync(worksFile) ? JSON.parse(readFileSync(worksFile, "utf8")) : [];
 let work = works.find((w) => w.client === client);
-// 31 letters and digits that can't be misread (no 0/o, 1/l/i): 6 of them make about 887 million ids
-const ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
-const newId = () => Array.from({ length: 6 }, () => ALPHABET[randomInt(ALPHABET.length)]).join("");
-let id = wantedId ?? work?.id ?? newId();
-while (!work && !wantedId && works.some((w) => w.id === id)) id = newId();
-if (!/^[a-z0-9]{4,16}$/.test(id)) fail(`An id is 4–16 lowercase letters and digits, not "${id}"`);
-if (works.some((w) => w.id === id && w.client !== client)) fail(`The id ${id} already belongs to ${works.find((w) => w.id === id).client}`);
+const slug = (s) =>
+  s
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+if (own?.name !== undefined && (typeof own.name !== "string" || !slug(own.name))) {
+  fail(`${client}/work.json: "name" is the professional's name in Latin letters, e.g. "Dilyara Soley"`);
+}
+const id = wantedId ?? (own?.name ? slug(own.name) : work?.id);
+if (!id) fail(`${client}/work.json needs "name": the professional's name in Latin letters ("Dilyara Soley"). The link is made of it.`);
+if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(id) || id.length < 4 || id.length > 40) {
+  fail(`An id is 4–40 lowercase Latin letters and digits, words joined by "-", not "${id}"`);
+}
+if (works.some((w) => w.id === id && w.client !== client)) {
+  fail(`The id ${id} already belongs to ${works.find((w) => w.id === id).client}: pick another with --id`);
+}
+const oldId = work && work.id !== id ? work.id : undefined;
 
 // ─── the build ───
 const require = createRequire(path.join(appDir, "package.json"));
+const outDir = path.join(root, "public", "previews", id);
+if (keepBuild) {
+  // the site as it was last built, moved to the new name if the name changed
+  const built = path.join(root, "public", "previews", work?.id ?? id);
+  if (!work || !existsSync(path.join(built, "index.html"))) fail(`--keep-build: ${client} has no build yet. Run it without the flag.`);
+  if (oldId) {
+    if (existsSync(outDir)) fail(`--keep-build: public/previews/${id}/ is in the way`);
+    renameSync(built, outDir);
+  }
+  console.log(`Keeping the built site in public/previews/${id}/`);
+} else {
+  await build();
+}
+
+async function build() {
 let vitePath;
 try {
   vitePath = require.resolve("vite");
@@ -97,7 +144,6 @@ if (placeholders) {
   });
 }
 
-const outDir = path.join(root, "public", "previews", id);
 console.log(`Building ${client} → public/previews/${id}/ …`);
 await vite.build({
   ...config,
@@ -113,6 +159,7 @@ await vite.build({
     reportCompressedSize: false,
   },
 });
+}
 
 // ─── the page: never indexed ───
 const indexFile = path.join(outDir, "index.html");
@@ -120,6 +167,25 @@ let html = readFileSync(indexFile, "utf8");
 if (!/name="robots"/.test(html)) html = html.replace(/<head>/i, `<head>\n    <meta name="robots" content="noindex, nofollow" />`);
 writeFileSync(indexFile, html);
 const pageTitle = (html.match(/<title>([^<]*)<\/title>/i)?.[1] ?? client).trim();
+
+// ─── the card: the site's first screen, for the link's preview in a messenger ───
+// /works/<id> tells Telegram, WhatsApp and the like to show this picture under the client's name
+// (app/works/[id]/page.tsx). It lives in public/cards/, not beside the site: robots.txt shuts /previews/ to bots,
+// and TelegramBot obeys robots.txt for the picture too.
+const cardFile = path.join(root, "public", "cards", `${id}.jpg`);
+let carded = false;
+try {
+  await shootCard(outDir, cardFile);
+  carded = true;
+} catch (e) {
+  console.warn(`\n!!  No link card: ${e.message}. The link will unfurl with the portfolio's own picture.`);
+}
+
+// ─── a new name: the old link goes ───
+if (oldId) {
+  rmSync(path.join(root, "public", "previews", oldId), { recursive: true, force: true });
+  rmSync(path.join(root, "public", "cards", `${oldId}.jpg`), { force: true });
+}
 
 // ─── the register ───
 const today = new Date().toISOString().slice(0, 10);
@@ -136,15 +202,8 @@ else delete work.placeholders;
 // The client's own file, ../peoplebrands/<client>/work.json, holds what the preview says about this work:
 // its title, its pricing, the intro (the first screen's line to the client) and the story (why this client needs
 // this site). It replaces those four here.
-const about = path.resolve(appDir, "..", "work.json");
 let told = "no work.json yet: the title is the page's, there is no story";
-if (existsSync(about)) {
-  let own;
-  try {
-    own = JSON.parse(readFileSync(about, "utf8"));
-  } catch (e) {
-    fail(`${client}/work.json isn't valid JSON: ${e.message}`);
-  }
+if (own) {
   const problems = [];
   if (own.title && !(own.title.ru && own.title.en)) problems.push('"title" needs both "ru" and "en"');
   if (own.story) {
@@ -191,4 +250,55 @@ const mb = (sizeOf(outDir) / 1024 / 1024).toFixed(2);
 console.log(`\nok  ${client}: ${mb} MB in public/previews/${id}/`);
 console.log(`    preview: /works/${id}/   (all previews: /works/)`);
 console.log(`    ${told}`);
+console.log(carded ? `    link card: public/cards/${id}.jpg` : "    no link card");
+if (oldId) console.log(`    renamed from /works/${oldId}/: that link no longer opens`);
 if (placeholders) console.log("\n!!  Built with stand-in pictures for missing images. Don't publish this: add the images and run it again.");
+
+/*
+ * A 1200x630 JPEG of the built site's first screen, the size Telegram, WhatsApp and VK show large. Shot at
+ * 1280x672 (a laptop's width, the same shape) at twice the pixels, then scaled down so the text stays sharp.
+ * Uses puppeteer-core and sharp from ../peoplebrands (tools/shoot.mjs uses them too) and the installed Chrome or
+ * Edge (or CHROME_PATH).
+ */
+async function shootCard(siteDir, file) {
+  const chrome = [
+    process.env.CHROME_PATH,
+    "C:/Program Files/Google/Chrome/Application/chrome.exe",
+    "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/usr/bin/google-chrome",
+    "/usr/bin/chromium",
+  ].find((p) => p && existsSync(p));
+  if (!chrome) throw new Error("no Chrome or Edge found (set CHROME_PATH)");
+  const { default: puppeteer } = await import(pathToFileURL(require.resolve("puppeteer-core")).href);
+  const { default: sharp } = await import(pathToFileURL(require.resolve("sharp")).href);
+
+  // the site's modules don't load from file://: a tiny server for the built folder
+  const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".webp": "image/webp", ".jpg": "image/jpeg", ".png": "image/png", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".mp4": "video/mp4" };
+  const server = http.createServer((req, res) => {
+    let p = path.join(siteDir, decodeURIComponent(req.url.split("?")[0]));
+    if (existsSync(p) && statSync(p).isDirectory()) p = path.join(p, "index.html");
+    if (!p.startsWith(siteDir) || !existsSync(p)) {
+      res.writeHead(404);
+      return res.end();
+    }
+    res.writeHead(200, { "Content-Type": types[path.extname(p)] ?? "application/octet-stream" });
+    createReadStream(p).pipe(res);
+  });
+  await new Promise((r) => server.listen(0, "127.0.0.1", r));
+  const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ["--hide-scrollbars"] });
+  try {
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1280, height: 672, deviceScaleFactor: 2 });
+    await page.goto(`http://127.0.0.1:${server.address().port}/index.html`, { waitUntil: "networkidle0", timeout: 60_000 });
+    await page.evaluate(() => document.fonts.ready);
+    // let the first screen's entrance animations finish
+    await new Promise((r) => setTimeout(r, 2500));
+    const png = await page.screenshot({ type: "png" });
+    mkdirSync(path.dirname(file), { recursive: true });
+    await sharp(png).resize(1200, 630).jpeg({ quality: 84, mozjpeg: true }).toFile(file);
+  } finally {
+    await browser.close();
+    server.close();
+  }
+}

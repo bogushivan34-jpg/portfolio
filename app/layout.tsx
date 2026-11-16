@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 // Inter is served from this site (the @fontsource package), so the build never depends on Google Fonts.
 import "@fontsource-variable/inter/wght.css";
 import "./globals.css";
+import { siteCard } from "@/lib/cards";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://ivanbogush.ru"),
@@ -25,14 +26,7 @@ export const metadata: Metadata = {
     title: "Иван Богуш · сайты, контент и привлечение клиентов",
     description:
       "Сайт, контент и каналы привлечения как одна система — и отчёт о том, что сработало.",
-    images: [
-      {
-        url: "/images/artlogos_page1.jpg",
-        width: 1631,
-        height: 958,
-        alt: "Сайт музыкальной школы ArtЛогос · работа Ивана Богуша",
-      },
-    ],
+    images: [siteCard],
     locale: "ru_RU",
     type: "website",
   },

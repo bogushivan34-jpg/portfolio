@@ -1,4 +1,6 @@
 User-agent: *
-# Client site previews are private links.
-Disallow: /works/
+# Client site previews are private links, but they must stay *crawlable*: TelegramBot (like TwitterBot) obeys
+# robots.txt, and a Disallow here is enough for a link sent in a message to arrive with no thumbnail at all.
+# They are kept out of search engines by their own <meta name="robots" content="noindex, nofollow"> instead
+# (scripts/add-work.mjs writes it, app/works/[id]/page.tsx sets it too).
 Disallow: /previews/

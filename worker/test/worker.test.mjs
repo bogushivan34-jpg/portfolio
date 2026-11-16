@@ -167,18 +167,19 @@ async function postAndSettle(body, env) {
 }
 
 test("«Показать» goes to the bot only, with the visitor's address", async () => {
-	const res = await postAndSettle({ kind: "event", event: "show", work: { id: "xrukpk", title: "Концепция сайта для Диляры Солей" } }, { ...baseEnv, ...LEADS });
+	const res = await postAndSettle({ kind: "event", event: "show", work: { id: "dilyara-soley", title: "Концепция сайта для Диляры Солей" } }, { ...baseEnv, ...LEADS });
 	assert.equal(res.status, 200);
 	assert.equal(sent.length, 1, "no email");
 	const [call] = toBot();
 	assert.equal(call.headers["X-Leads-Key"], LEADS.LEADS_KEY);
-	assert.deepEqual(call.body, { type: "show", ip: "1.2.3.4", work: { id: "xrukpk", title: "Концепция сайта для Диляры Солей" } });
+	assert.deepEqual(call.body, { type: "show", ip: "1.2.3.4", work: { id: "dilyara-soley", title: "Концепция сайта для Диляры Солей" } });
 });
 
 test("a bad event is refused and nothing is sent", async () => {
 	const env = { ...baseEnv, ...LEADS };
-	assert.equal((await postAndSettle({ kind: "event", event: "hack", work: { id: "xrukpk" } }, env)).status, 400);
+	assert.equal((await postAndSettle({ kind: "event", event: "hack", work: { id: "dilyara-soley" } }, env)).status, 400);
 	assert.equal((await postAndSettle({ kind: "event", event: "show", work: { id: "../x" } }, env)).status, 400);
+	assert.equal((await postAndSettle({ kind: "event", event: "show", work: { id: "-dilyara" } }, env)).status, 400);
 	assert.equal(sent.length, 0);
 });
 
@@ -208,7 +209,7 @@ test("without a Resend key the message still reaches the bot", async () => {
 
 test("nothing goes to the bot without LEADS_URL and LEADS_KEY", async () => {
 	await postAndSettle(good, { ...baseEnv, LEADS_URL: LEADS.LEADS_URL });
-	await postAndSettle({ kind: "event", event: "show", work: { id: "xrukpk" } }, baseEnv);
+	await postAndSettle({ kind: "event", event: "show", work: { id: "dilyara-soley" } }, baseEnv);
 	assert.equal(toBot().length, 0);
 });
 
@@ -219,7 +220,7 @@ test("an unreachable bot never breaks the form", async () => {
 		return real(url, init);
 	};
 	assert.equal((await postAndSettle(good, { ...baseEnv, ...LEADS })).status, 200);
-	assert.equal((await postAndSettle({ kind: "event", event: "show", work: { id: "xrukpk" } }, { ...baseEnv, ...LEADS })).status, 200);
+	assert.equal((await postAndSettle({ kind: "event", event: "show", work: { id: "dilyara-soley" } }, { ...baseEnv, ...LEADS })).status, 200);
 });
 
 test("feedback is refused without a message, consent or a valid work id", async () => {

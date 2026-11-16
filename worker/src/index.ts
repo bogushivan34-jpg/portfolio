@@ -61,7 +61,8 @@ interface Enquiry {
 }
 
 const LIMITS = { name: 120, contact: 120, profession: 120, need: 60, needs: 8, message: 3000, workTitle: 160 };
-const WORK_ID = /^[a-z0-9]{4,16}$/;
+// a preview id is the client's name: "dilyara-soley" (scripts/add-work.mjs)
+const WORK_ID = /^(?=.{4,40}$)[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 const clip = (v: unknown, max: number) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : "");
 // The message keeps its line breaks.
@@ -114,7 +115,7 @@ export function parseEnquiry(body: Record<string, unknown>): Enquiry | { error: 
 
 	if (body.kind === "feedback") {
 		const w = (body.work ?? {}) as Record<string, unknown>;
-		const id = clip(w.id, 16);
+		const id = clip(w.id, 40);
 		if (!WORK_ID.test(id)) return { error: "bad_work" };
 		if (!message) return { error: "missing_fields" };
 		if (body.consent !== true) return { error: "no_consent" };
@@ -134,7 +135,7 @@ export function parseEnquiry(body: Record<string, unknown>): Enquiry | { error: 
 export function parseEvent(body: Record<string, unknown>): { work: { id: string; title: string } } | { error: string } {
 	if (body.event !== "show") return { error: "bad_event" };
 	const w = (body.work ?? {}) as Record<string, unknown>;
-	const id = clip(w.id, 16);
+	const id = clip(w.id, 40);
 	if (!WORK_ID.test(id)) return { error: "bad_work" };
 	return { work: { id, title: clip(w.title, LIMITS.workTitle) || id } };
 }
