@@ -20,6 +20,8 @@
  * Where something was not measured, the copy says so. Keep it that way.
  */
 
+import { aiModels, aiRequestsPerDay } from "./ai-models";
+
 export type Lang = "ru" | "en";
 export type L = { ru: string; en: string };
 
@@ -67,10 +69,11 @@ export const profile = {
   statusCheckUrl: "https://npd.nalog.ru/check-status/",
 };
 
-export const nav: { id: string; label: L }[] = [
+export const nav: { id: string; label: L; page?: string }[] = [
   { id: "work", label: { ru: "Кейсы", en: "Work" } },
   { id: "approach", label: { ru: "Подход", en: "Approach" } },
-  { id: "services", label: { ru: "Услуги", en: "Services" } },
+  // a tab of its own, not a section of the main page
+  { id: "services", label: { ru: "Услуги", en: "Services" }, page: "/services/" },
   { id: "about", label: { ru: "Обо мне", en: "About" } },
 ];
 
@@ -530,74 +533,206 @@ export const approach = {
   ] as { title: L; text: L }[],
 };
 
+/*
+ * The services store, its own page at /services (app/services, components/store). Each service is a tile with a
+ * Lottie animation (public/lottie/<id>.json, written by scripts/build-lottie.mjs) that the visitor drags into a cart.
+ * Ivan asked for it on 20 November 2026: "like a game store where you buy cool features for your site", starting
+ * with these four, more to come; then for no cards, just the icons "like an app catalogue". No prices here either:
+ * the cart ends in a message, not an order.
+ */
+export type ServiceId =
+  | "site"
+  | "brand"
+  | "bots"
+  | "seo"
+  | "access"
+  | "auth"
+  | "pay"
+  | "lang"
+  | "analytics"
+  | "reels"
+  | "print"
+  | "booking"
+  | "ai"
+  | "mail";
+
+export interface StoreItem {
+  id: ServiceId;
+  title: L;
+  subtitle: L;
+  /** the tile's gradient, light (top left) to deep (bottom right); the deep one also colours its button */
+  colors: [string, string];
+  /** a background of its own for the tile, in place of the two-colour gradient */
+  face?: string;
+  /** a caveat behind a «?» beside the title */
+  note?: L;
+}
+
+/** "A, B или C" */
+const listOr = (names: string[], or: string) =>
+  names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} ${or} ${names[names.length - 1]}`;
+const thousands = (n: number, sep: string) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, sep);
+
 export const services = {
   title: { ru: "Услуги", en: "Services" } as L,
   lead: {
-    ru: "Можно взять проект целиком или одну часть: только сайт, только соцсети или только аналитику.",
-    en: "Take the whole project or one part: just the site, just the social pages, or just the analytics.",
+    ru: "Соберите набор для своего проекта: перетащите в корзину то, что нужно. Стоимость и сроки посчитаю под ваш набор.",
+    en: "Put together a set for your project: drag what you need into the cart. I'll work out the cost and timing for your set.",
   } as L,
-  columns: {
-    what: { ru: "Что делаю", en: "What I do" } as L,
-    includes: { ru: "Что входит", en: "What's included" } as L,
-    get: { ru: "Что вы получаете", en: "What you get" } as L,
-  },
+  hint: {
+    ru: "Иконки можно брать и бросать в корзину",
+    en: "Pick up an icon and throw it in the cart",
+  } as L,
+  add: { ru: "В корзину", en: "Add" } as L,
+  added: { ru: "В корзине", en: "In cart" } as L,
+  more: { ru: "Подробнее", en: "More" } as L,
   items: [
     {
-      title: { ru: "Разбор и позиционирование", en: "Discovery and positioning" },
-      includes: {
-        ru: "Встреча, разбор ваших услуг, клиентов и конкурентов",
-        en: "A call, and a close look at your services, customers and competitors",
+      id: "site",
+      title: { ru: "Сайт под ключ", en: "Website, done for you" },
+      subtitle: {
+        ru: "Дизайн, тексты, запуск на домене и форма заявки",
+        en: "Design, copy, launch on your domain, an enquiry form",
       },
-      get: {
-        ru: "Короткий текст: кто вы, для кого и почему к вам",
-        en: "A short text: who you are, who it's for and why you",
+      colors: ["#6f9bff", "#3a3fd9"],
+    },
+    {
+      id: "brand",
+      title: { ru: "Бренд для соцсетей и контент-план", en: "Social brand and content plan" },
+      subtitle: {
+        ru: "Оформление профиля, шаблоны постов и план публикаций",
+        en: "Profile design, post templates and a posting plan",
+      },
+      colors: ["#ff9a6b", "#e8407a"],
+    },
+    {
+      id: "bots",
+      title: { ru: "Telegram-боты", en: "Telegram bots" },
+      subtitle: {
+        ru: "Запись, расписание и ответы клиентам без вашего участия",
+        en: "Bookings, timetables and answers to customers, on their own",
+      },
+      // Telegram's blue: the tile is Telegram's paper plane with a bot attached
+      colors: ["#41c3fb", "#1786d0"],
+    },
+    {
+      id: "seo",
+      title: { ru: "SEO + GEO", en: "SEO + GEO" },
+      subtitle: {
+        ru: "Чтобы вас находили в поиске и советовали нейросети",
+        en: "Found in search engines and recommended by AI assistants",
+      },
+      colors: ["#4fe0a0", "#0b8f68"],
+    },
+    // added 20 November 2026, in Ivan's words
+    {
+      id: "access",
+      title: { ru: "Доступ без VPN", en: "Access without a VPN" },
+      subtitle: {
+        ru: "Настрою сайт для пользователей из России или для России и зарубежных IP",
+        en: "Set up for visitors in Russia, or for Russian and foreign IPs alike",
+      },
+      colors: ["#5f6b7d", "#1b2029"],
+    },
+    {
+      id: "auth",
+      title: { ru: "Пользовательская база", en: "User accounts" },
+      subtitle: {
+        ru: "Вход для пользователей через Google, Яндекс или другие соцсети",
+        en: "Sign-in with Google, Yandex or other social networks",
+      },
+      colors: ["#b07dff", "#5b34e6"],
+    },
+    {
+      id: "pay",
+      title: { ru: "Онлайн-оплата на сайте", en: "Online payments on your site" },
+      subtitle: { ru: "Приём платежей через ЮKassa", en: "Payments through YooKassa" },
+      colors: ["#ffd166", "#ee8400"],
+    },
+    {
+      id: "lang",
+      title: { ru: "Вторая языковая версия", en: "A second language version" },
+      subtitle: {
+        ru: "Тот же сайт на втором языке, с переключателем",
+        en: "The same site in a second language, with a switch",
+      },
+      colors: ["#45e3d3", "#0b8590"],
+    },
+    {
+      id: "analytics",
+      title: { ru: "Аналитика и отчёт", en: "Analytics and reports" },
+      subtitle: {
+        ru: "Метки на ссылках, счётчики на сайте и отчёт раз в месяц: откуда пришли заявки",
+        en: "Tagged links, site counters and a monthly report on where enquiries came from",
+      },
+      colors: ["#5b6bff", "#1a1f78"],
+    },
+    {
+      id: "reels",
+      title: { ru: "Reels под ключ", en: "Reels, done for you" },
+      subtitle: { ru: "Сценарий, съёмка и монтаж коротких видео", en: "Script, shooting and editing of short videos" },
+      colors: ["#ff72b6", "#a3168f"],
+    },
+    {
+      id: "print",
+      title: { ru: "Печатные материалы с QR-кодом", en: "Print with a QR code" },
+      subtitle: {
+        ru: "Листовки, плакаты и визитки, которые ведут на сайт",
+        en: "Flyers, posters and cards that lead to your site",
+      },
+      colors: ["#cdeb5a", "#4f8f0c"],
+    },
+    {
+      id: "booking",
+      title: { ru: "Онлайн-запись", en: "Online booking" },
+      subtitle: {
+        ru: "Клиент сам выбирает свободное время на сайте и получает напоминание",
+        en: "Customers pick a free slot on the site and get a reminder",
+      },
+      colors: ["#ff7d6e", "#cf1f2b"],
+    },
+    {
+      id: "ai",
+      title: { ru: "ИИ-помощник на сайте", en: "AI assistant on your site" },
+      subtitle: {
+        ru: "Встрою на ваш сайт: отвечает клиентам на частые вопросы в любое время",
+        en: "Built into your site, answering customers' common questions at any hour",
+      },
+      colors: ["#5cc8ff", "#7a52f4"],
+      face: "linear-gradient(150deg, #5cc8ff 0%, #7a5cff 52%, #ff5fa8 100%)",
+      // the models' names are in data/ai-models.ts
+      note: {
+        ru: `Работает на бесплатных моделях: ${listOr(aiModels, "или")}. До ${thousands(aiRequestsPerDay, " ")} запросов в день.`,
+        en: `Runs on free models: ${listOr(aiModels, "or")}. Up to ${thousands(aiRequestsPerDay, ",")} requests a day.`,
       },
     },
     {
-      title: { ru: "Сайт", en: "Website" },
-      includes: {
-        ru: "Дизайн, тексты, запуск на домене, форма заявки; если нужно — запись и онлайн-оплата",
-        en: "Design, copy, launch on your domain, an enquiry form; booking and online payment if needed",
+      id: "mail",
+      title: { ru: "Почта на домене", en: "Email on your domain" },
+      subtitle: {
+        ru: "Адрес вида hello@вашсайт.ru: приём и отправка писем, а письма с сайта уходят через Resend",
+        en: "An address like hello@yoursite.com: send and receive mail, and your site's emails go out through Resend",
       },
-      get: {
-        ru: "Адрес, который можно дать клиенту в любом канале",
-        en: "One link you can give a customer in any channel",
-      },
+      colors: ["#ffaa5e", "#e2560b"],
     },
-    {
-      title: { ru: "Соцсети и контент", en: "Social pages and content" },
-      includes: {
-        ru: "Оформление профиля, шаблоны, контент-план, посты, карусели и Reels: сценарий, съёмка, монтаж",
-        en: "Profile setup, templates, a content plan, posts, carousels and reels: script, shooting, editing",
-      },
-      get: {
-        ru: "Регулярные публикации без вашего участия в рутине",
-        en: "Regular posts without the routine landing on you",
-      },
-    },
-    {
-      title: { ru: "Каналы привлечения и сообщество", en: "Acquisition channels and community" },
-      includes: {
-        ru: "Telegram-боты, каталоги и полезные страницы, печатные материалы с QR-кодом, сообщество в Discord или Telegram",
-        en: "Telegram bots, directories and useful pages, printed materials with a QR code, a community on Discord or Telegram",
-      },
-      get: {
-        ru: "Поток людей, который не зависит от рекламного бюджета, и место, куда они возвращаются",
-        en: "A flow of people that doesn't depend on an ad budget, and a place they come back to",
-      },
-    },
-    {
-      title: { ru: "Аналитика", en: "Analytics" },
-      includes: {
-        ru: "UTM-метки на ссылках, счётчики на сайте, разбор статистики соцсетей",
-        en: "UTM-tagged links, site counters, a review of your social media insights",
-      },
-      get: {
-        ru: "Отчёт раз в месяц: откуда пришли заявки и что делать дальше",
-        en: "A monthly report: where enquiries came from and what to do next",
-      },
-    },
-  ] as { title: L; includes: L; get: L }[],
+  ] as StoreItem[],
+  cart: {
+    name: { ru: "Корзина", en: "Cart" } as L,
+    title: { ru: "Ваш набор", en: "Your set" } as L,
+    empty: { ru: "Пока пусто. Перетащите сюда услугу.", en: "Empty for now. Drag a service in here." } as L,
+    drop: { ru: "Бросайте сюда", en: "Drop it here" } as L,
+    note: {
+      ru: "Напишите, и я посчитаю стоимость и сроки этого набора.",
+      en: "Send it to me and I'll work out the cost and timing of this set.",
+    } as L,
+    discuss: { ru: "Обсудить в Telegram", en: "Discuss on Telegram" } as L,
+    form: { ru: "или оставить заявку", en: "or send an enquiry" } as L,
+    remove: { ru: "Убрать", en: "Remove" } as L,
+    close: { ru: "Закрыть", en: "Close" } as L,
+    message: { ru: "Здравствуйте! Хочу обсудить набор: ", en: "Hello! I'd like to discuss this set: " } as L,
+    addedNote: { ru: "добавлено в корзину", en: "added to the cart" } as L,
+    removedNote: { ru: "убрано из корзины", en: "removed from the cart" } as L,
+  },
   audienceLabel: { ru: "С кем работаю", en: "Who I work with" } as L,
   audience: {
     ru: "Частные специалисты — психологи, репетиторы, преподаватели; музыкальные и творческие школы; гиды и лекторы; небольшие кафе и студии; авторы собственных продуктов.",
