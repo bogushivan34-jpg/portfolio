@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Plans, { LineIcon, cssVars, useEntrance } from "@/components/Plans";
+import Plans, { LineIcon, Prepayments, cssVars, useEntrance } from "@/components/Plans";
 import { Lang, form, formatPrice, legalLinks, preview as t, prices, profile, quoted, type Tier } from "@/data/content";
 import type { Work } from "@/data/works";
 import { submitForm } from "@/lib/submit";
@@ -273,12 +273,20 @@ function PricingInfo({ work, lang }: { work: Work; lang: Lang }) {
         <div className="pr-rise" style={cssVars({ "--d": "70ms" })}>
           <p className="label mt-7">{p.stepsLabel[lang]}</p>
           <ol className="mt-3 space-y-3">
-            {p.steps.map((step, idx) => (
-              <li key={idx} className="flex gap-3 text-[16px] leading-[1.5]">
-                <span className="num w-4 shrink-0 text-[15px] text-accent">{idx + 1}</span>
-                <span>{step[lang]}</span>
-              </li>
-            ))}
+            {p.steps.map((step, idx) => {
+              // a price agreed for this client has no plans to list
+              const list = step.prepayment && !pricing;
+              return (
+                <li key={idx} className="flex gap-3 text-[16px] leading-[1.5]">
+                  <span className="num w-4 shrink-0 text-[15px] text-accent">{idx + 1}</span>
+                  <div className="min-w-0 flex-1">
+                    {step.text[lang]}
+                    {list && ":"}
+                    {list && <Prepayments lang={lang} />}
+                  </div>
+                </li>
+              );
+            })}
           </ol>
 
           {/* the steps ask the client to pay first: what they can check about who they pay (content.ts, official) */}

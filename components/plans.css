@@ -168,6 +168,11 @@
   height: 12px;
 }
 
+/* on the green panel of the prepayments the grey bars would vanish */
+.prepay .pl-meter i {
+  background: #c9ddd2;
+}
+
 .pl-meter[data-level="1"] i:nth-child(-n + 1),
 .pl-meter[data-level="2"] i:nth-child(-n + 2),
 .pl-meter[data-level="3"] i {

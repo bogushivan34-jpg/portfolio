@@ -2,13 +2,13 @@
 /*
  * Publishes a client site concept as a preview on the portfolio: ivanbogush.ru/works/<id>.
  *
- *   node scripts/add-work.mjs <client>                 e.g. disoley.ru  (the folder in ../peoplebrands)
+ *   node scripts/add-work.mjs <client>                 e.g. disoley.ru  (the folder in ../Pitches)
  *   node scripts/add-work.mjs <client> --id anna-ivanova-2   pick the id yourself (two clients with one name)
  *   node scripts/add-work.mjs <client> --placeholders  stand-in pictures for missing images (local testing only)
  *   node scripts/add-work.mjs <client> --full          allow the long story (a client already talking to Ivan)
  *   node scripts/add-work.mjs <client> --keep-build    don't rebuild the site: only work.json changed (or the name)
  *
- * It builds ../peoplebrands/<client>/app with that site's own Vite config, except as normal files instead of one
+ * It builds ../Pitches/<client>/app with that site's own Vite config, except as normal files instead of one
  * inlined HTML (vite-plugin-singlefile is left out): pictures stay separate files, so git keeps each one once however
  * often the site is republished. The build goes to public/previews/<id>/, marked noindex, a screenshot of its first
  * screen to public/cards/<id>.jpg (the picture the link unfurls with), and the work is added to data/works.json (or
@@ -16,10 +16,10 @@
  * run it again after changing the site and the id stays; change the name and the old link is removed.
  *
  * The work's title, pricing, intro (the line on the first screen) and story (why this client needs this site) are
- * read from the client's own file, ../peoplebrands/<client>/work.json, on every run: edit them there, not in
+ * read from the client's own file, ../Pitches/<client>/work.json, on every run: edit them there, not in
  * data/works.json.
  *
- * The client sites share one node_modules in ../peoplebrands (npm workspaces): `npm install` there once.
+ * The client sites share one node_modules in ../Pitches (npm workspaces): `npm install` there once.
  */
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
@@ -42,20 +42,20 @@ const fail = (msg) => {
   process.exit(1);
 };
 
-if (!client) fail("Which client? node scripts/add-work.mjs <folder in ../peoplebrands>");
-const appDir = path.resolve(root, "..", "peoplebrands", client, "app");
+if (!client) fail("Which client? node scripts/add-work.mjs <folder in ../Pitches>");
+const appDir = path.resolve(root, "..", "Pitches", client, "app");
 if (!existsSync(path.join(appDir, "package.json"))) fail(`No site at ${appDir}`);
 
-// ─── the audit: nothing missing, nothing misconfigured (peoplebrands/tools/check.mjs, AGENTS.md) ───
-const checker = path.resolve(root, "..", "peoplebrands", "tools", "check.mjs");
+// ─── the audit: nothing missing, nothing misconfigured (Pitches/tools/check.mjs, AGENTS.md) ───
+const checker = path.resolve(root, "..", "Pitches", "tools", "check.mjs");
 if (existsSync(checker)) {
   const audit = spawnSync(process.execPath, [checker, client], { stdio: "inherit" });
   if (audit.status !== 0 && !placeholders) {
-    fail(`The audit above found missing assets or setup problems. Fix them first (peoplebrands/AGENTS.md), or publish a draft with --placeholders.`);
+    fail(`The audit above found missing assets or setup problems. Fix them first (Pitches/AGENTS.md), or publish a draft with --placeholders.`);
   }
 }
 
-// The client's own file, ../peoplebrands/<client>/work.json: read here for the name the link is made of, and
+// The client's own file, ../Pitches/<client>/work.json: read here for the name the link is made of, and
 // checked and copied into data/works.json after the build.
 const about = path.resolve(appDir, "..", "work.json");
 let own;
@@ -115,7 +115,7 @@ let vitePath;
 try {
   vitePath = require.resolve("vite");
 } catch {
-  fail(`Vite isn't installed for ${client}: run npm install in ../peoplebrands`);
+  fail(`Vite isn't installed for ${client}: run npm install in ../Pitches`);
 }
 const vite = await import(pathToFileURL(vitePath).href);
 const loaded = await vite.loadConfigFromFile({ command: "build", mode: "production" }, undefined, appDir);
@@ -199,7 +199,7 @@ if (work) {
 if (placeholders) work.placeholders = true;
 else delete work.placeholders;
 
-// The client's own file, ../peoplebrands/<client>/work.json, holds what the preview says about this work:
+// The client's own file, ../Pitches/<client>/work.json, holds what the preview says about this work:
 // its title, its pricing, the intro (the first screen's line to the client) and the story (why this client needs
 // this site). It replaces those four here.
 let told = "no work.json yet: the title is the page's, there is no story";
@@ -214,7 +214,7 @@ if (own) {
       if (!c.title || !Array.isArray(c.text) || !c.text.length) problems.push(`story chapter ${i + 1} needs a "title" and "text" (a list of paragraphs)`);
     }
     // A first note to someone who hasn't asked for anything is short: a long, detailed story reads as a
-    // machine's sales pitch (peoplebrands/AGENTS.md, step 7). --full is for a client already talking to Ivan.
+    // machine's sales pitch (Pitches/AGENTS.md, step 7). --full is for a client already talking to Ivan.
     if (!full && !problems.length) {
       const words = [s.title, ...s.lead, ...s.chapters.flatMap((c) => [c.title, ...c.text]), s.closing?.title ?? "", ...(s.closing?.text ?? [])]
         .join(" ")
@@ -257,7 +257,7 @@ if (placeholders) console.log("\n!!  Built with stand-in pictures for missing im
 /*
  * A 1200x630 JPEG of the built site's first screen, the size Telegram, WhatsApp and VK show large. Shot at
  * 1280x672 (a laptop's width, the same shape) at twice the pixels, then scaled down so the text stays sharp.
- * Uses puppeteer-core and sharp from ../peoplebrands (tools/shoot.mjs uses them too) and the installed Chrome or
+ * Uses puppeteer-core and sharp from ../Pitches (tools/shoot.mjs uses them too) and the installed Chrome or
  * Edge (or CHROME_PATH).
  */
 async function shootCard(siteDir, file) {

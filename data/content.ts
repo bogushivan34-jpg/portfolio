@@ -653,6 +653,12 @@ export interface Tier {
 export const formatPrice = (roubles: number, lang: Lang) =>
   `${String(roubles).replace(/\B(?=(\d{3})+(?!\d))/g, lang === "ru" ? " " : ",")} ₽`;
 
+/*
+ * The prepayment: a third of the price, rounded down to the hundred so that it is never more than a third
+ * (14 900 → 4 900). The offer (/oferta, «Цена и оплата») says the same.
+ */
+export const prepayment = (roubles: number) => Math.floor(roubles / 300) * 100;
+
 /** A plan’s name inside a sentence, in that language’s quotation marks. */
 export const quoted = (name: string, lang: Lang) => (lang === "ru" ? `«${name}»` : `“${name}”`);
 
@@ -1005,17 +1011,24 @@ export const preview = {
     optionsLabel: { ru: "Три варианта", en: "Three options" } as L,
     choose: { ru: "Выбрать этот вариант", en: "Choose this option" } as L,
     chooseText: { ru: "Хочу вариант", en: "I'd like the option" } as L,
+    /* Ivan's wording of 18 November 2026; «состав» taken out at his request, as unclear to a client */
     steps: [
-      { ru: "Вы смотрите превью и пишете, что поменять", en: "You look through the preview and tell me what to change" },
+      { text: { ru: "Вы смотрите превью и пишете, что поменять", en: "You look through the preview and tell me what to change" } },
       {
-        ru: "Выбираете вариант — я подтверждаю состав и срок и присылаю ссылку на оплату",
-        en: "You choose an option; I confirm what's included and the timeline, and send a payment link",
+        text: {
+          ru: "Выбираете вариант, и я подтверждаю, что именно сделаю и за какой срок — не дольше недели. Предоплата — только треть стоимости",
+          en: "You choose an option, and I confirm exactly what I'll do and how long it takes: a week at most. The prepayment is only a third of the price",
+        },
+        // the standard plans' thirds are listed under it (Prepayments in components/Plans.tsx)
+        prepayment: true,
       },
       {
-        ru: "После оплаты вношу правки и передаю сайт: файлами или уже на вашем домене",
-        en: "Once it's paid, I make the changes and hand the site over: as files, or live on your domain",
+        text: {
+          ru: "Вношу изменения и показываю готовый сайт. Остаток оплачивается перед передачей: файлами или на вашем домене",
+          en: "I make the changes and show you the finished site. The rest is paid before the handover: as files, or live on your domain",
+        },
       },
-    ] as L[],
+    ] as { text: L; prepayment?: boolean }[],
     /*
      * Right under the steps that ask the client to pay first: the facts a client can check for themselves, so that
      * paying a stranger doesn't look like a scam. Ivan asked for it in this card only (15 November 2026), not on the

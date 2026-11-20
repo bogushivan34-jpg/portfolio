@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent, type RefObject } from "react";
 import { FeatureText } from "@/components/Hint";
-import { Lang, formatPrice, prices, quoted, type FeatureIcon, type Tier } from "@/data/content";
+import { Lang, formatPrice, prepayment, prices, quoted, type FeatureIcon, type Tier } from "@/data/content";
 import "./plans.css";
 
 /** "static": no motion · "armed": further down the card, hidden, waiting · "in": play */
@@ -114,6 +114,55 @@ export function LineIcon({ name = "check", tone }: { name?: keyof typeof ICONS; 
   );
 }
 
+/** A price whose characters come up one after another from behind the baseline (plans.css, .pr-char). */
+function Rolling({ text }: { text: string }) {
+  return (
+    <>
+      <span className="sr-only">{text}</span>
+      <span aria-hidden="true">
+        {Array.from(text).map((ch, c) => (
+          <span key={c} className="pr-char">
+            <span style={cssVars({ "--c": c })}>{ch}</span>
+          </span>
+        ))}
+      </span>
+    </>
+  );
+}
+
+/** The plan's level beside its name: three small bars, as many green as the plan's place. */
+function Meter({ level }: { level: number }) {
+  return (
+    <span aria-hidden="true" className="pl-meter" data-level={level}>
+      {[0, 1, 2].map((k) => (
+        <i key={k} style={cssVars({ "--k": k })} />
+      ))}
+    </span>
+  );
+}
+
+/*
+ * Under the step that asks for the prepayment ("Как дальше" in the pricing card): what each plan's third comes
+ * to. Ivan asked for it to stand out (18 November 2026): a green panel, the figures in green, rolling in like the
+ * plans' prices when the steps come into sight. The full prices are in the plans just above; beside each third
+ * («из 14 900 ₽») they pushed the rows past the panel on a phone.
+ */
+export function Prepayments({ lang }: { lang: Lang }) {
+  return (
+    <ul className="prepay mt-3 space-y-2 rounded-xl bg-accentSoft px-4 py-3">
+      {prices.tiers.map((tier, index) => (
+        <li key={tier.id} className="flex items-baseline gap-2.5 text-[15px] leading-snug text-ink">
+          <Meter level={index + 1} />
+          <span>{tier.name[lang]}</span>
+          <span className="num ml-auto whitespace-nowrap text-[17px] text-accent">
+            <Rolling text={formatPrice(prepayment(tier.price), lang)} />
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /*
  * The three plans, each building on the one before, as compact cards for the pricing card of a client's preview
  * (PreviewPopup.tsx). That card is the only place prices are shown: the main page has none.
@@ -189,22 +238,11 @@ function Plan({
 
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h3 className="flex items-baseline gap-2.5 text-[18px] font-semibold leading-snug text-ink">
-          <span aria-hidden="true" className="pl-meter" data-level={index + 1}>
-            {[0, 1, 2].map((k) => (
-              <i key={k} style={cssVars({ "--k": k })} />
-            ))}
-          </span>
+          <Meter level={index + 1} />
           {tier.name[lang]}
         </h3>
         <p className="num whitespace-nowrap text-[22px] leading-tight">
-          <span className="sr-only">{price}</span>
-          <span aria-hidden="true">
-            {Array.from(price).map((ch, c) => (
-              <span key={c} className="pr-char">
-                <span style={cssVars({ "--c": c })}>{ch}</span>
-              </span>
-            ))}
-          </span>
+          <Rolling text={price} />
         </p>
       </div>
       <span aria-hidden="true" className="pl-rule mt-4" />

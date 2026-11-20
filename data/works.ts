@@ -3,7 +3,7 @@ import type { L, Pricing } from "./content";
 
 /*
  * The site concepts published as previews at /works/<id>. scripts/add-work.mjs adds and updates entries;
- * each one's title, pricing and story come from the client's own file, ../peoplebrands/<client>/work.json.
+ * each one's title, pricing and story come from the client's own file, ../Pitches/<client>/work.json.
  *
  * One entry is not a client's: "sample" (/works/sample), a public example of a preview with Ivan's own site
  * inside. It is where the plans and prices can be seen without being a client: the offer (/oferta) and the
@@ -17,7 +17,7 @@ import type { L, Pricing } from "./content";
  * A short note to the client on what the site was built to do for them, in their own language: told in small
  * notes in the corner of the site, each popping up as the client scrolls to the part it's about. For a first contact it is two or three points and under 120 words, with no `seen` facts or
  * `sources`: those belong to the full version, written only for a client already talking to Ivan
- * (peoplebrands/AGENTS.md, "The story"; scripts/add-work.mjs enforces the length).
+ * (Pitches/AGENTS.md, "The story"; scripts/add-work.mjs enforces the length).
  */
 export interface Story {
   /** the one line a phone shows for the first note before it's opened; the title is shown without it */
@@ -57,7 +57,7 @@ export interface Intro {
 
 export interface Work {
   id: string;
-  /** the client's folder in ../peoplebrands */
+  /** the client's folder in ../Pitches */
   client: string;
   /**
    * A page of this site shown inside the preview, instead of a concept built into public/previews/<id>/.

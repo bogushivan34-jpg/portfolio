@@ -6,7 +6,7 @@ import type { Locked } from "@/lib/worksLock";
 
 export interface IndexEntry {
   id: string;
-  /** the client's folder in ../peoplebrands, usually their domain */
+  /** the client's folder in ../Pitches: profi-<id> for Profi leads, else their domain */
   client: string;
   title: string;
   published: string;
