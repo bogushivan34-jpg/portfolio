@@ -97,7 +97,6 @@ export default function PreviewNote({
   onPricing: () => void;
 }) {
   const n = t.notes;
-  const counter = `${index + 1} ${n.of[lang]} ${count}`;
 
   const hide = (
     <button type="button" onClick={onHide} aria-label={n.hide[lang]} title={n.hide[lang]} className={iconButton}>
@@ -127,7 +126,7 @@ export default function PreviewNote({
 
   return (
     <section
-      aria-label={`${n.note[lang]} ${counter}`}
+      aria-label={n.note[lang]}
       className="note-in pointer-events-auto flex max-h-[min(440px,calc(100dvh-96px))] min-w-0 flex-1 flex-col rounded-2xl border border-line bg-white shadow-[0_8px_28px_rgba(21,23,26,0.16)] sm:w-[320px] sm:flex-none"
     >
       <div className="flex shrink-0 items-start gap-0.5 pl-4 pr-1.5 pt-2">

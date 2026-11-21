@@ -875,8 +875,8 @@ export const prices = {
         {
           icon: "pay",
           text: {
-            ru: "Онлайн-оплата на сайте: ЮKassa или Robokassa",
-            en: "Online payment on the site: YooKassa or Robokassa",
+            ru: "Онлайн-оплата на сайте: ЮKassa",
+            en: "Online payment on the site: YooKassa",
           },
         },
         /*
@@ -1080,7 +1080,6 @@ export const preview = {
   /* The story as small notes beside the photo. The story itself is in the work (data/works.json). */
   notes: {
     note: { ru: "Заметка", en: "Note" } as L,
-    of: { ru: "из", en: "of" } as L,
     prev: { ru: "Предыдущая заметка", en: "Previous note" } as L,
     next: { ru: "Следующая заметка", en: "Next note" } as L,
     hide: { ru: "Скрыть заметку", en: "Hide the note" } as L,
