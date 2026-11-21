@@ -49,7 +49,8 @@ if (!existsSync(path.join(appDir, "package.json"))) fail(`No site at ${appDir}`)
 // ─── the audit: nothing missing, nothing misconfigured (Pitches/tools/check.mjs, AGENTS.md) ───
 const checker = path.resolve(root, "..", "Pitches", "tools", "check.mjs");
 if (existsSync(checker)) {
-  const audit = spawnSync(process.execPath, [checker, client], { stdio: "inherit" });
+  // --fix: fonts the builder left out are downloaded from Fontsource (check.mjs explains)
+  const audit = spawnSync(process.execPath, [checker, client, "--fix"], { stdio: "inherit" });
   if (audit.status !== 0 && !placeholders) {
     fail(`The audit above found missing assets or setup problems. Fix them first (Pitches/AGENTS.md), or publish a draft with --placeholders.`);
   }
@@ -145,20 +146,72 @@ if (placeholders) {
 }
 
 console.log(`Building ${client} → public/previews/${id}/ …`);
-await vite.build({
-  ...config,
-  configFile: false,
-  root: appDir,
-  base: "./",
-  plugins,
-  logLevel: "warn",
-  build: {
-    ...(config.build ?? {}),
-    outDir,
-    emptyOutDir: true,
-    reportCompressedSize: false,
-  },
-});
+// On Windows esbuild passes a chunk over 1 MB (before minifying) through a temp file and deletes it afterwards, and
+// Defender's real-time scan holds that fresh file every time: "remove …\Temp\esbuild-…: Access is denied" (Mikhail
+// Khors's site, 21 November 2026). So each npm package goes in a chunk of its own, and no file gets near 1 MB.
+const vendorChunk = (moduleId) => {
+  const m = moduleId.split(path.sep).join("/").match(/\/node_modules\/((?:@[^/]+\/)?[^/]+)/);
+  return m ? "vendor-" + m[1].replace(/[@/]+/g, "-").replace(/^-/, "") : undefined;
+};
+const rollupOptions = config.build?.rollupOptions ?? {};
+const output = Array.isArray(rollupOptions.output) || rollupOptions.output?.manualChunks ? rollupOptions.output : { ...(rollupOptions.output ?? {}), manualChunks: vendorChunk };
+// Still locked (the site's own code over 1 MB, or a slow scan): build again, and the last time without minifying.
+// Vite then skips esbuild on the output (target "esnext", minify off), so there's no temp file to lock; the
+// scripts are larger, the site the same.
+const locked = (e) => /Access is denied|EPERM|EBUSY|resource busy or locked/i.test(String(e?.message ?? e));
+for (let attempt = 1; ; attempt++) {
+  const plain = attempt === 3;
+  try {
+    await vite.build({
+      ...config,
+      configFile: false,
+      root: appDir,
+      base: "./",
+      plugins,
+      logLevel: "warn",
+      build: {
+        ...(config.build ?? {}),
+        outDir,
+        emptyOutDir: true,
+        reportCompressedSize: false,
+        rollupOptions: { ...rollupOptions, output },
+        ...(plain ? { minify: false, target: "esnext" } : {}),
+      },
+    });
+    if (plain) console.warn("··  Built without minifying the scripts: it works the same, the files are larger.");
+    break;
+  } catch (e) {
+    if (!locked(e) || plain) throw e;
+    console.warn(`\n··  A temporary file was locked (Windows Defender scanning it?). Building again${attempt === 2 ? ", without minifying" : ""}…`);
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+}
+
+// Vite leaves a url() in the CSS it couldn't find as written, so it 404s in the preview (fonts the builder never
+// shipped). The audit should have caught it; this catches whatever it didn't.
+const unresolved = [];
+(function walk(dir) {
+  for (const f of readdirSync(dir)) {
+    const p = path.join(dir, f);
+    if (statSync(p).isDirectory()) walk(p);
+    else if (f.endsWith(".css")) {
+      for (const m of readFileSync(p, "utf8").matchAll(/url\(\s*["']?([^"')]+)["']?\s*\)/g)) {
+        const spec = m[1].trim();
+        // not a file: data, another server, the page's own root, or an SVG reference like url(#n) / url(%23n)
+        if (/^(data:|https?:|\/\/|#|%23|\/)/i.test(spec)) continue;
+        if (!existsSync(path.resolve(path.dirname(p), decodeURIComponent(spec.split(/[?#]/)[0])))) unresolved.push(`${path.relative(outDir, p).replace(/\\/g, "/")}: ${spec}`);
+      }
+    }
+  }
+})(outDir);
+// A missing font only costs the typeface (the browser falls back to the next font in the stack): a warning.
+// Anything else (a background picture) is a hole in the page: no publish.
+const lostFonts = [...new Set(unresolved.filter((u) => /\.(woff2?|ttf|otf)$/i.test(u.split(/[?#]/)[0])))];
+const lostFiles = [...new Set(unresolved.filter((u) => !lostFonts.includes(u)))];
+if (lostFonts.length) console.warn(`\n!!  Fonts missing from the build, the site shows its fallback font there (the audit above says why):\n   ${lostFonts.join("\n   ")}`);
+if (lostFiles.length && !placeholders) {
+  fail(`The built site links files that aren't in it, so they'd 404 in the preview:\n   ${lostFiles.join("\n   ")}\n   Add them to the site in ../Pitches/${client}/app.`);
+}
 }
 
 // ─── the page: never indexed ───
