@@ -142,7 +142,7 @@ export default function PreviewNote({
         >
           <Icon d={LEFT} />
         </button>
-        <span className="shrink-0 self-center whitespace-nowrap text-[12px] tabular-nums text-muted">{counter}</span>
+        <span className="flex h-7 shrink-0 items-center whitespace-nowrap px-0.5 text-[12px] tabular-nums text-muted">{counter}</span>
         <button
           type="button"
           onClick={() => onStep(index + 1)}
