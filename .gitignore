@@ -30,3 +30,5 @@ ssr-check.html
 me.jpg
 # working notes for the YooKassa application
 YOOKASSA_REQUIREMENTS.md
+# raw Trouvère metrics as Ivan gave them; the site shows a selection (data/content.ts)
+trouvere-metrics-*.md

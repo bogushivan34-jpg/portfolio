@@ -49,6 +49,48 @@ export default function TrouvereCase({ lang }: { lang: Lang }) {
       </ul>
       <p className="mt-6 max-w-[760px] text-[18px] leading-[1.55] text-ink">{t.insight[lang]}</p>
 
+      {/* Funnel and channels, six months */}
+      <h4 className="mt-12 text-[22px] font-semibold leading-tight tracking-[-0.01em] text-ink">
+        {t.funnel.title[lang]}
+      </h4>
+      <ol className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line lg:grid-cols-4">
+        {t.funnel.steps.map((s, idx) => (
+          <li key={idx} className="bg-white p-4 sm:p-5">
+            <p className="num whitespace-nowrap text-[22px] leading-none sm:text-[26px]">{s.value[lang]}</p>
+            <p className="mt-2 text-[14px] leading-[1.45] text-muted">{s.label[lang]}</p>
+            {s.rate && <p className="mt-2 text-[14px] font-medium leading-[1.45] text-accent">{s.rate[lang]}</p>}
+          </li>
+        ))}
+      </ol>
+
+      <p className="label mt-8">{t.funnel.channelsTitle[lang]}</p>
+      <div className="mt-3 overflow-x-auto rounded-xl border border-line bg-white">
+        <table className="w-full text-left text-[14px] leading-[1.4] sm:text-[15px]">
+          <thead>
+            <tr className="text-[13px] text-muted">
+              <th scope="col" className="px-3 py-3 font-medium sm:px-5">{t.funnel.columns.channel[lang]}</th>
+              {/* visits are the least telling column, so a phone drops them and keeps the payments in view */}
+              <th scope="col" className="hidden px-3 py-3 text-right font-medium sm:table-cell">
+                {t.funnel.columns.visits[lang]}
+              </th>
+              <th scope="col" className="px-2 py-3 text-right font-medium sm:px-3">{t.funnel.columns.paid[lang]}</th>
+              <th scope="col" className="px-3 py-3 text-right font-medium sm:px-5">{t.funnel.columns.revenue[lang]}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {t.funnel.rows.map((r, idx) => (
+              <tr key={idx} className="border-t border-line">
+                <th scope="row" className="px-3 py-3 font-normal text-ink sm:px-5">{r.channel[lang]}</th>
+                <td className="num hidden whitespace-nowrap px-3 py-3 text-right font-normal sm:table-cell">{r.visits[lang]}</td>
+                <td className="num px-2 py-3 text-right sm:px-3">{r.paid}</td>
+                <td className="num px-3 py-3 text-right sm:px-5">{r.revenue}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-3 max-w-[760px] text-[15px] leading-[1.55] text-muted">{t.funnel.note[lang]}</p>
+
       {/* How */}
       <h4 className="mt-12 text-[22px] font-semibold leading-tight tracking-[-0.01em] text-ink">
         {t.channelsTitle[lang]}
