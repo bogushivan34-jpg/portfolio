@@ -5,12 +5,12 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 
-/** the main page's: Ivan's own work */
+/** the main page's and /services': Ivan, what he does and his headline result, drawn by scripts/site-card.mjs */
 export const siteCard = {
-  url: "/images/artlogos_page1.jpg",
-  width: 1631,
-  height: 958,
-  alt: "Сайт музыкальной школы ArtЛогос · работа Ивана Богуша",
+  url: "/images/site_card.jpg",
+  width: 1200,
+  height: 630,
+  alt: "Иван Богуш · сайты, контент и привлечение клиентов",
 };
 
 /** A preview's: its site's first screen, shot by scripts/add-work.mjs into public/cards/<id>.jpg. */
