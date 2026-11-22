@@ -38,9 +38,11 @@ export default function PreviewIntro({
 }) {
   const button = useRef<HTMLButtonElement>(null);
 
-  // the one thing to do here is press the button: Enter or Space does it straight away
+  // the one thing to do here is press the button: Enter or Space does it straight away. Without the focus ring:
+  // a browser draws it for focus given by a script, and around a button set inside the line it cut through the
+  // letters above. It still shows once the visitor presses Tab.
   useEffect(() => {
-    if (state === "shown") button.current?.focus({ preventScroll: true });
+    if (state === "shown") button.current?.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
   }, [state]);
 
   // the screen's own fade, not a child's
