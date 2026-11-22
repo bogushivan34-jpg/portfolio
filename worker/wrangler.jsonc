@@ -14,7 +14,7 @@
 	"vars": {
 		// The leads bot, on the relay's server: every message and every «Показать» on a preview go here too.
 		"LEADS_URL": "https://form.ivanbogush.ru/bot/event",
-		"MAIL_TO": "bogushiv@mail.ru",
+		"MAIL_TO": "pr@ivanbogush.ru",
 		// The sending address must be on a domain verified in Resend.
 		"MAIL_FROM": "Сайт ivanbogush.ru <form@ivanbogush.ru>",
 		// Pages allowed to post the form (CORS). Comma-separated. The http:// ones are for visitors who reach the site

@@ -54,7 +54,7 @@ export const profile = {
   location: { ru: "Москва / удалённо", en: "Moscow / remote" } as L,
   telegram: "@myfeelinzz",
   telegramUrl: "https://t.me/myfeelinzz",
-  email: "bogushiv@mail.ru",
+  email: "pr@ivanbogush.ru",
   phone: "+7 999 809-02-08",
   phoneHref: "tel:+79998090208",
   portrait: "/images/ivan_bogush.jpg",
