@@ -33,25 +33,11 @@ export default function CaseBlock({ item, lang }: { item: CaseItem; lang: Lang }
         <div className="mt-8 rounded-xl bg-accentSoft p-5 md:p-6">
           <p className="label !text-accent">{caseLabels.result[lang]}</p>
           <p className="mt-2 font-medium text-ink">{item.result[lang]}</p>
-          {item.note && <p className="mt-2 text-[15px] leading-[1.5]">{item.note[lang]}</p>}
         </div>
       </div>
 
       <div className="lg:col-span-5">
-        {item.shot && <Figure shot={item.shot} lang={lang} href={item.link?.url} />}
-        {item.panel && (
-          <div className="rounded-xl border border-line p-5 md:p-6">
-            <p className="font-semibold text-ink">{item.panel.title[lang]}</p>
-            <ul className="mt-4 space-y-3 text-[16px] leading-[1.5]">
-              {item.panel.items.map((line, idx) => (
-                <li key={idx} className="flex gap-3">
-                  <span aria-hidden="true" className="mt-[12px] h-px w-3 shrink-0 bg-muted" />
-                  <span>{line[lang]}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <Figure shot={item.shot} lang={lang} href={item.link?.url} />
       </div>
     </article>
   );

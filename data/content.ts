@@ -2,22 +2,22 @@
  * All the copy on the page, in Russian and English.
  *
  * Every fact comes from the project folders or from Ivan directly. Sources, so the next edit stays honest:
- * - Trouvère: 30 paying monthly subscribers and 40+ Instagram followers given by Ivan (November 2026);
- *   reel figures from Instagram insights (trouvere-social/.../content-plan/src/content/posts.ts);
+ * - Trouvère: 100+ paying monthly subscribers given by Ivan (22 November 2026), 40+ Instagram followers given by Ivan
+ *   (November 2026); reel figures from Instagram insights (trouvere-social/.../content-plan/src/content/posts.ts);
  *   channels from TROUVERE.APP/PR, Desktop/Bots and trouvere-social (brand kit, reels, Discord).
- * - Telegram bots: Desktop/Bots (Картограф, the MGIK schedule bot, the inspector dashboard).
+ *   The bots (Картограф, the MGIK schedule bot) and their dashboard (Desktop/Bots/inspector) are told inside
+ *   Trouvère, without counts.
  * - ArtЛогос: MusicSchoolMeta/specs.md; the outcome is reported by the school's owners.
  * - Южное небо Тавриды: tour/southern-sky-project, tour/flyers; live at неботавриды.рф (screenshot taken 10 November 2026).
  * - ArtЛогос site: live at artlogos.fun.
  * - ПроДостояние.Крым: makam/deploy-reg-ru (page and archive counts), makam/presentation.
- * - Мидийное место: Instagram screenshots; 100–200 likes on the best reels per Ivan.
- * - Education, languages, award: MGIK documents and the diploma scan.
+ * - Education, languages: MGIK documents.
  * - Legal name, tax status, INN and phone: given by Ivan for the YooKassa application (YOOKASSA_REQUIREMENTS.md).
  * - YooKassa: the shop is approved, per Ivan on 15 November 2026; he sends clients its payment links.
  *   Card and SBP are what the legal pages already named; correct `preview.pricing.official.pay` if the shop gives more.
  * - Prices: given by Ivan on 11 November 2026 as provisional ("not a final version"), see `prices` below.
  *
- * Where something was not measured, the copy says so. Keep it that way.
+ * Every number here is real. What wasn't measured is left out rather than explained away.
  */
 
 import { aiModels, aiRequestsPerDay } from "./ai-models";
@@ -42,11 +42,7 @@ export interface CaseItem {
   task: L;
   did: L[];
   result: L;
-  /** A caveat about the numbers, shown under the result */
-  note?: L;
-  shot?: Shot;
-  /** A short list shown beside the text when the case has no picture */
-  panel?: { title: L; items: L[] };
+  shot: Shot;
 }
 
 export const profile = {
@@ -87,8 +83,8 @@ export const hero = {
     en: "I help small businesses find customers, and I measure what worked",
   } as L,
   lead: {
-    ru: "Делаю сайт, контент и каналы привлечения как одну систему: человек узнаёт о вас, понимает, чем вы полезны, и записывается или платит. Сначала проверяю всё на собственном продукте: у Trouvère 30 платящих подписчиков без платной рекламы.",
-    en: "I build the website, the content and the acquisition channels as one system: people find you, see how you can help, and book or pay. I test it all on my own product first: Trouvère has 30 paying subscribers with no paid ads.",
+    ru: "Делаю сайт, контент и каналы привлечения как одну систему: человек узнаёт о вас, понимает, чем вы полезны, и записывается или платит. Сначала проверяю всё на собственном продукте: у Trouvère больше 100 платящих подписчиков без платной рекламы.",
+    en: "I build the website, the content and the acquisition channels as one system: people find you, see how you can help, and book or pay. I test it all on my own product first: Trouvère has over 100 paying subscribers with no paid ads.",
   } as L,
   primaryCta: { ru: "Написать в Telegram", en: "Message me on Telegram" } as L,
   secondaryCta: { ru: "Посмотреть кейсы", en: "See the work" } as L,
@@ -96,7 +92,7 @@ export const hero = {
 
 export const proof: { value: L; label: L }[] = [
   {
-    value: { ru: "30", en: "30" },
+    value: { ru: "100+", en: "100+" },
     label: {
       ru: "платящих подписчиков у Trouvère, без платной рекламы",
       en: "paying subscribers at Trouvère, with no paid ads",
@@ -116,20 +112,13 @@ export const proof: { value: L; label: L }[] = [
       en: "websites delivered: a school, tours, a heritage project, a directory, an app",
     },
   },
-  {
-    value: { ru: "3 место", en: "3rd place" },
-    label: {
-      ru: "фестиваль социальной рекламы «Выбери жизнь», Москва, 2024",
-      en: "“Choose Life” social advertising festival, Moscow, 2024",
-    },
-  },
 ];
 
 export const workIntro = {
   title: { ru: "Кейсы", en: "Work" } as L,
   lead: {
-    ru: "В каждом — задача, что я сделал и что получилось. Цифры только те, что действительно измеряли.",
-    en: "Each one shows the task, what I did and what came of it. The only numbers here are ones that were actually measured.",
+    ru: "В каждом — задача, что я сделал и что получилось.",
+    en: "Each one shows the task, what I did and what came of it.",
   } as L,
 };
 
@@ -151,7 +140,7 @@ export const trouvere = {
   } as L,
   metrics: [
     {
-      value: { ru: "30", en: "30" },
+      value: { ru: "100+", en: "100+" },
       label: { ru: "платящих подписчиков: ежемесячная подписка на сайте", en: "paying subscribers on a monthly plan, bought on the site" },
     },
     {
@@ -168,8 +157,8 @@ export const trouvere = {
     },
   ] as { value: L; label: L }[],
   insight: {
-    ru: "Подписчиков в Instagram* чуть больше сорока, а платящих клиентов — тридцать. Мы не копим аудиторию в соцсети: каждый канал сразу ведёт человека в продукт.",
-    en: "Just over forty Instagram* followers, and thirty paying customers. We don't collect an audience on social media: every channel takes people straight into the product.",
+    ru: "Подписчиков в Instagram* чуть больше сорока, а платящих клиентов — больше ста. Мы не копим аудиторию в соцсети: каждый канал сразу ведёт человека в продукт.",
+    en: "Just over forty Instagram* followers, and over a hundred paying customers. We don't collect an audience on social media: every channel takes people straight into the product.",
   } as L,
   channelsTitle: {
     ru: "Как набрали аудиторию без платной рекламы",
@@ -186,8 +175,8 @@ export const trouvere = {
     {
       title: { ru: "Полезные Telegram-боты для сообществ", en: "Useful Telegram bots for communities" },
       text: {
-        ru: "Бот решает задачу самого сообщества: ищет фанатские карты для игры или показывает студентам расписание. О Trouvère он упоминает одной строкой и не чаще раза в три дня.",
-        en: "Each bot solves the community's own problem: finding fan-made maps for a game, or showing students their timetable. It mentions Trouvère in one line, at most once every three days.",
+        ru: "Я сделал двух ботов, и каждый решает задачу самого сообщества. Библиотека фанатских карт для игры находит карту по описанию обычными словами, а бот с расписанием с октября показывает студентам вуза их пары. О Trouvère бот упоминает одной строкой и не чаще раза в три дня.",
+        en: "I built two bots, each solving the community's own problem. A library of fan-made maps for a game finds a map from a plain-words description, and since October a timetable bot has shown university students their classes. A bot mentions Trouvère in one line, at most once every three days.",
       },
     },
     {
@@ -207,8 +196,8 @@ export const trouvere = {
     {
       title: { ru: "Учёт по каждому каналу", en: "Every channel is tracked" },
       text: {
-        ru: "Все ссылки размечены UTM-метками, а для ботов сделана своя панель: показы, охват, блокировки. Видно, какой канал приводит людей, а какой нет.",
-        en: "Every link carries UTM tags, and the bots have their own dashboard: impressions, reach, blocks. We can see which channel brings people and which doesn't.",
+        ru: "Все ссылки размечены UTM-метками, а для ботов я написал свою панель: диалоги, показы упоминаний, охват и блокировки по каждому боту в одном месте. Видно, какой канал приводит людей, а какой нет.",
+        en: "Every link carries UTM tags, and for the bots I wrote my own dashboard: conversations, mentions shown, reach and blocks for every bot in one place. We can see which channel brings people and which doesn't.",
       },
     },
   ] as { title: L; text: L }[],
@@ -337,10 +326,6 @@ export const cases: CaseItem[] = [
       ru: "По словам владельцев, учеников сейчас достаточно: школа загружена и не ищет новых преподавателей.",
       en: "The owners say they have enough students: the school is full and isn't looking for more teachers.",
     },
-    note: {
-      ru: "Заявки с сайта отдельно не считали, поэтому процентов конверсии здесь нет.",
-      en: "Enquiries from the site weren't tracked separately, so there are no conversion percentages here.",
-    },
     shot: {
       src: "/images/artlogos_page1.jpg",
       width: 1631,
@@ -410,87 +395,11 @@ export const cases: CaseItem[] = [
       ru: "2 901 страница, 2 741 запись архива и 115 досье мастеров на одной площадке, готовой к конференции.",
       en: "2,901 pages, 2,741 archive entries and 115 master dossiers on one platform, ready for the conference.",
     },
-    note: {
-      ru: "Сайт ничего не продаёт и не собирает заявки, поэтому воронкой я его не измеряю.",
-      en: "The site sells nothing and collects no leads, so I don't measure it as a funnel.",
-    },
     shot: {
       src: "/images/prodostoyanie_museum.jpg",
       width: 1600,
       height: 950,
       alt: { ru: "Музейный раздел сайта «ПроДостояние.Крым»", en: "The museum section of the ProDostoyanie.Crimea site" },
-    },
-  },
-  {
-    id: "restaurant",
-    title: { ru: "Мидийное место", en: "Midiynoe Mesto" },
-    meta: { ru: "Ресторан морепродуктов · ВДНХ, Москва · 2026", en: "Seafood restaurant · VDNKh, Moscow · 2026" },
-    role: { ru: "Сценарии, съёмка и монтаж Reels", en: "Reel scripts, shooting and editing" },
-    task: {
-      ru: "Вести Instagram* ресторана без бюджета на продакшн: снимать прямо в смену, с командой в кадре.",
-      en: "Run the restaurant's Instagram* with no production budget: shoot during the shift, with the team on camera.",
-    },
-    did: [
-      {
-        ru: "Придумал формат: короткая сценка из зала с подписью-крючком в первом кадре.",
-        en: "Set the format: a short scene from the floor with a hook caption on the first frame.",
-      },
-      {
-        ru: "Снимал на телефон в зале и за баром: живые люди вместо постановочных фото блюд.",
-        en: "Shot on a phone on the floor and behind the bar: real people instead of staged food photos.",
-      },
-      {
-        ru: "Разбирал каждый ролик — просмотры, досмотры, сохранения — и менял следующий сценарий.",
-        en: "Reviewed every reel for views, watch-through and saves, and changed the next script accordingly.",
-      },
-    ],
-    result: {
-      ru: "Лучшие ролики набирали 100–200 лайков. Для локального ресторана, чья аудитория — гости и жители района, это хороший уровень.",
-      en: "The best reels reached 100–200 likes. For a local restaurant whose audience is its guests and neighbours, that's a good level.",
-    },
-    shot: {
-      src: "/images/restaurant_reels_a.jpg",
-      width: 1800,
-      height: 1135,
-      alt: { ru: "Три ролика ресторана «Мидийное место»", en: "Three reels for Midiynoe Mesto" },
-    },
-  },
-  {
-    id: "bots",
-    title: { ru: "Telegram-боты и панель аналитики", en: "Telegram bots and an analytics dashboard" },
-    meta: { ru: "Собственный канал привлечения для Trouvère · 2026", en: "An owned acquisition channel for Trouvère · 2026" },
-    role: { ru: "Идея, разработка, аналитика", en: "Concept, development, analytics" },
-    task: {
-      ru: "Нужен был канал привлечения, который не зависит от рекламных кабинетов и при этом не раздражает людей.",
-      en: "We needed an acquisition channel that doesn't depend on ad platforms and doesn't annoy people.",
-    },
-    did: [
-      {
-        ru: "Сделал бота-библиотеку фанатских карт для игрового сообщества: карту можно найти обычными словами.",
-        en: "Built a library bot of fan-made maps for a game community: a map can be found in plain words.",
-      },
-      {
-        ru: "Запустил бота с расписанием занятий для студентов вуза; он работает с октября 2026 года.",
-        en: "Launched a class-timetable bot for university students; it has been running since October 2026.",
-      },
-      {
-        ru: "Написал свою панель: диалоги, показы упоминаний, охват и блокировки по каждому боту в одном месте.",
-        en: "Wrote my own dashboard: conversations, mentions shown, reach and blocks for every bot in one place.",
-      },
-    ],
-    result: {
-      ru: "Два бота запущены и работают в своих сообществах. Показы упоминаний видны в панели, переходы — в аналитике приложения, так что понятно, что приносит каждое сообщество.",
-      en: "Two bots are live in their communities. Mentions shown appear in the dashboard and clicks in the app's analytics, so it's clear what each community brings.",
-    },
-    panel: {
-      title: { ru: "Что видно в панели по каждому боту", en: "What the dashboard shows for each bot" },
-      items: [
-        { ru: "Диалоги, команды и нажатия кнопок", en: "Conversations, commands and button presses" },
-        { ru: "Сколько раз показано упоминание и скольким людям", en: "How many times a mention was shown, and to how many people" },
-        { ru: "Какой вариант текста показывался в каком сообществе", en: "Which wording was shown in which community" },
-        { ru: "Блокировки бота в течение недели после показа", en: "Bot blocks within a week of a mention" },
-        { ru: "Новые и активные пользователи, откуда они пришли", en: "New and active users, and how they arrived" },
-      ],
     },
   },
 ];
@@ -526,8 +435,8 @@ export const approach = {
     {
       title: { ru: "Честные цифры", en: "Honest numbers" },
       text: {
-        ru: "Показываю реальную статистику, без накруток. Если что-то не измеряли, так и пишу — как в кейсах выше.",
-        en: "I show real statistics, never inflated. Where something wasn't measured, I say so, as in the cases above.",
+        ru: "Показываю реальную статистику, без накруток: вы видите те же цифры, что и я.",
+        en: "I show real statistics, never inflated: you see the same numbers I do.",
       },
     },
   ] as { title: L; text: L }[],
@@ -951,13 +860,6 @@ export const about = {
       value: {
         ru: "Английский — C1, французский — B1. Англоязычную версию Trouvère и её Instagram* веду сам",
         en: "English C1, French B1. I run Trouvère's English version and its Instagram* myself",
-      },
-    },
-    {
-      label: { ru: "Награда", en: "Award" },
-      value: {
-        ru: "3 место, IX Открытый фестиваль-конкурс социальной рекламы «Выбери жизнь», номинация «Мы вместе», Москва, 2024",
-        en: "3rd place, 9th Open Social Advertising Festival “Choose Life”, “We Are Together” category, Moscow, 2024",
       },
     },
     {

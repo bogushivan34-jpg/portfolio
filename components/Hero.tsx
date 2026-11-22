@@ -38,15 +38,15 @@ export default function Hero({ lang }: { lang: Lang }) {
         </div>
       </div>
 
-      {/* Proof: four numbers, each with its source in the cases below */}
+      {/* Proof: three numbers, each with its source in the cases below. On a phone the first takes the whole row. */}
       <div className="border-y border-line">
-        <ul className="wrap grid grid-cols-2 lg:grid-cols-4">
+        <ul className="wrap grid grid-cols-2 lg:grid-cols-3">
           {proof.map((item, idx) => (
             <li
               key={idx}
-              className={`py-7 pr-5 lg:py-9 ${idx > 0 ? "lg:border-l lg:border-line lg:pl-7" : ""} ${
-                idx % 2 === 1 ? "border-l border-line pl-5" : ""
-              } ${idx > 1 ? "border-t border-line lg:border-t-0" : ""}`}
+              className={`py-7 pr-5 lg:py-9 ${
+                idx === 0 ? "col-span-2 lg:col-span-1" : "border-t border-line lg:border-l lg:border-t-0 lg:pl-7"
+              } ${idx === 2 ? "border-l pl-5" : ""}`}
             >
               <p className="num whitespace-nowrap text-[27px] leading-none sm:text-[30px] md:text-[38px]">{item.value[lang]}</p>
               <p className="mt-3 text-[14px] leading-[1.45] text-muted">{item.label[lang]}</p>
