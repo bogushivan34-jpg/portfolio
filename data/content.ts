@@ -9,7 +9,10 @@
  *   channels from TROUVERE.APP/PR, Desktop/Bots and trouvere-social (brand kit, reels, Discord).
  *   The bots (Картограф, the MGIK schedule bot) and their dashboard (Desktop/Bots/inspector) are told inside
  *   Trouvère, without names.
- * - ArtЛогос: MusicSchoolMeta/specs.md; the outcome is reported by the school's owners.
+ * - ArtЛогос: MusicSchoolMeta/specs.md; the outcome is reported by the school's owners. The funnel and the local
+ *   search figure are from the site's analytics as Ivan gave them on 23 November 2026 (the counter has since been
+ *   removed from the site); he gave ranges, the site shows the middle of each. Raw figures on disk, not in this repo
+ *   (artlogos-metrics-2026-11-23.md, gitignored). No figure for paid lessons, so the funnel stops at the booking click.
  * - Южное небо Тавриды: tour/southern-sky-project, tour/flyers; live at неботавриды.рф (screenshot taken 10 November 2026).
  * - ArtЛогос site: live at artlogos.fun.
  * - ПроДостояние.Крым: makam/deploy-reg-ru (page and archive counts), makam/presentation.
@@ -44,6 +47,13 @@ export interface CaseItem {
   task: L;
   did: L[];
   result: L;
+  /* Measured results: one headline number, then the path from visit to booking, each step as a share of visitors. */
+  funnel?: {
+    headline: { value: L; label: L };
+    title: L;
+    steps: { label: L; pct: number }[];
+    note: L;
+  };
   shot: Shot;
 }
 
@@ -366,6 +376,27 @@ export const cases: CaseItem[] = [
     result: {
       ru: "По словам владельцев, учеников сейчас достаточно: школа загружена и не ищет новых преподавателей.",
       en: "The owners say they have enough students: the school is full and isn't looking for more teachers.",
+    },
+    funnel: {
+      headline: {
+        value: { ru: "Каждый 10-й", en: "1 in 10" },
+        label: {
+          ru: "посетитель из местного поиска (Симеиз, Ялта, Крым) нажимает «Записаться», пишет или звонит",
+          en: "visitors from local search (Simeiz, Yalta, Crimea) taps “Book”, writes or calls",
+        },
+      },
+      title: { ru: "Путь посетителя по сайту", en: "How visitors move through the site" },
+      steps: [
+        { label: { ru: "Зашли на сайт", en: "Opened the site" }, pct: 100 },
+        { label: { ru: "Остались дольше 10 секунд или сыграли в тренажёр", en: "Stayed over 10 seconds or played the trainer" }, pct: 70 },
+        { label: { ru: "Дошли до программ", en: "Reached the programmes" }, pct: 52 },
+        { label: { ru: "Дошли до записи на пробный урок", en: "Reached the trial-lesson booking" }, pct: 27 },
+        { label: { ru: "Нажали «Записаться», написали или позвонили", en: "Tapped “Book”, wrote or called" }, pct: 5 },
+      ],
+      note: {
+        ru: "Полоса — доля от всех посетителей, справа — переход с предыдущего шага. Многие приходят поиграть в тренажёр, поэтому по всему трафику записывается каждый двадцатый, а из местного поиска — каждый десятый.",
+        en: "Each bar is a share of all visitors; on the right, the rate from the step before. Many come to play the trainer, so across all traffic 1 in 20 books, and 1 in 10 from local search.",
+      },
     },
     shot: {
       src: "/images/artlogos_page1.jpg",
