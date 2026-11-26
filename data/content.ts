@@ -19,9 +19,10 @@
  * - ArtЛогос site: live at artlogos.fun.
  * - ПроДостояние.Крым: makam/deploy-reg-ru (page and archive counts), makam/presentation. Search figures (Yandex
  *   Webmaster, Google Search Console), indexation and the visitor funnel (Metrica) for the first six months given by
- *   Ivan on 26 November 2026; the case shows month 6. Raw figures on disk, not in this repo
+ *   Ivan on 26 November 2026; the case shows month 6. The analytics were last updated on 20 November 2026 (per Ivan,
+ *   26 November 2026), and the case says so. Raw figures on disk, not in this repo
  *   (prodostoyanie-metrics-2026-11-26.md, gitignored). The site is down for maintenance (November 2026), so the case
- *   has no link.
+ *   has no link. The 3D hall screenshots were taken from its last local build (makam/site/out) on 26 November 2026.
  * - Education, languages: MGIK documents.
  * - Legal name, tax status, INN and phone: given by Ivan for the YooKassa application (YOOKASSA_REQUIREMENTS.md).
  * - YooKassa: the shop is approved, per Ivan on 15 November 2026; he sends clients its payment links.
@@ -61,10 +62,12 @@ export interface CaseItem {
     title: L;
     steps: { label: L; pct: number }[];
     note: L;
+    /* when the figures were last updated, shown under the funnel */
+    updated?: L;
   };
   shot: Shot;
-  /* Photos of the work in print, in a row under the screenshot at one height. */
-  photos?: { shots: Shot[]; caption: L };
+  /* More pictures under the screenshot: in a row at one height (photos of print), or one under another. */
+  photos?: { shots: Shot[]; caption: L; layout?: "row" | "stack" };
 }
 
 export const profile = {
@@ -546,12 +549,40 @@ export const cases: CaseItem[] = [
         ru: "Полоса — доля от всех, кто пришёл из поиска, справа — переход с предыдущего шага. В месяц это 28 действий: семейные фото и записи, расшифровки и переводы, заявки мастеров, записи в школу и запросы от музеев и школ о партнёрстве.",
         en: "Each bar is a share of everyone who came from search; on the right, the rate from the step before. That comes to 28 actions a month: family photos and recordings, transcriptions and translations, applications from masters, school sign-ups and partnership requests from museums and schools.",
       },
+      updated: { ru: "Аналитика обновлена 20 ноября 2026 года.", en: "Analytics last updated on 20 November 2026." },
     },
     shot: {
       src: "/images/prodostoyanie_museum.jpg",
       width: 1600,
       height: 950,
       alt: { ru: "Музейный раздел сайта «ПроДостояние.Крым»", en: "The museum section of the ProDostoyanie.Crimea site" },
+    },
+    photos: {
+      layout: "stack",
+      shots: [
+        {
+          src: "/images/prodostoyanie_hall_kemanche.jpg",
+          width: 1600,
+          height: 950,
+          alt: { ru: "3D-зал музыкальных инструментов: кеманче", en: "The 3D hall of musical instruments: the kemanche" },
+        },
+        {
+          src: "/images/prodostoyanie_hall_saz.jpg",
+          width: 1600,
+          height: 950,
+          alt: { ru: "3D-зал музыкальных инструментов: саз", en: "The 3D hall of musical instruments: the saz" },
+        },
+        {
+          src: "/images/prodostoyanie_hall_davul.jpg",
+          width: 1600,
+          height: 950,
+          alt: { ru: "3D-зал музыкальных инструментов: давул", en: "The 3D hall of musical instruments: the davul" },
+        },
+      ],
+      caption: {
+        ru: "3D-зал музыкальных инструментов: экспонат можно повернуть, приблизить и послушать",
+        en: "The 3D hall of musical instruments: each exhibit can be rotated, zoomed in on and heard",
+      },
     },
   },
 ];

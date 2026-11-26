@@ -53,13 +53,21 @@ export default function CaseBlock({ item, lang }: { item: CaseItem; lang: Lang }
   );
 }
 
-/* Photos side by side at one height: each column is as wide as its photo's proportions. Clicking opens it full size. */
+/*
+ * More pictures under the case's screenshot. In a row they stand at one height, each column as wide as its picture's
+ * proportions; stacked, each takes the full width. Clicking opens one full size.
+ */
 function PhotoRow({ photos, lang }: { photos: NonNullable<CaseItem["photos"]>; lang: Lang }) {
+  const row = photos.layout !== "stack";
   return (
     <figure className="mt-6">
       <div
-        className="grid gap-3"
-        style={{ gridTemplateColumns: photos.shots.map((s) => `minmax(0, ${(s.width / s.height).toFixed(3)}fr)`).join(" ") }}
+        className={row ? "grid gap-3" : "grid gap-4"}
+        style={
+          row
+            ? { gridTemplateColumns: photos.shots.map((s) => `minmax(0, ${(s.width / s.height).toFixed(3)}fr)`).join(" ") }
+            : undefined
+        }
       >
         {photos.shots.map((shot) => (
           <a
@@ -105,6 +113,7 @@ function Funnel({ funnel, lang }: { funnel: NonNullable<CaseItem["funnel"]>; lan
         })}
       </ol>
       <p className="mt-4 text-[14px] leading-[1.55] text-muted">{funnel.note[lang]}</p>
+      {funnel.updated && <p className="mt-2 text-[14px] leading-[1.55] text-muted">{funnel.updated[lang]}</p>}
     </div>
   );
 }
