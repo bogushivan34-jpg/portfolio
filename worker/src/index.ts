@@ -1,13 +1,18 @@
 /*
- * The portfolio's contact form, as a Cloudflare Worker.
+ * ivanbogush.ru as a Cloudflare Worker: the site itself and its contact form.
  *
- * POST / with JSON { name, contact, profession?, needs?, message?, consent, lang?, website? }
+ * The site is the static export of the Next.js app (`next build` → ../out), served as the Worker's static assets
+ * (wrangler.jsonc "assets"); every path below that isn't one of the Worker's own goes to them (env.ASSETS).
+ *
+ * POST /api/form with JSON { name, contact, profession?, needs?, message?, consent, lang?, website? }
  *   → checks it, then emails it to MAIL_TO through Resend (resend.com) from MAIL_FROM.
- * POST / with JSON { kind: "feedback", work: { id, title }, message, name?, contact?, consent, website? }
+ * POST /api/form with JSON { kind: "feedback", work: { id, title }, message, name?, contact?, consent, website? }
  *   → feedback from a client on a site preview at ivanbogush.ru/works/<id>: the message is required, name and
  *     contact are optional (the preview already says who it's for).
- * POST / with JSON { kind: "event", event: "show", work: { id, title } }
+ * POST /api/form with JSON { kind: "event", event: "show", work: { id, title } }
  *   → a client pressed «Показать» on their preview's first screen. Nothing is emailed; it only goes to the bot.
+ * POST / is the same: the form posted there while the site was on GitHub Pages, and pages already open in a browser
+ * still do.
  *
  * Ivan's Telegram bot (Desktop/Bots/portfolio-leads-bot, @portfolioleads2bot) gets every message and every
  * «Показать», with the visitor's address: it notifies him and counts unique visitors per preview. The Worker posts
@@ -23,27 +28,37 @@
  *   502 { error: "send_failed" }     Resend refused or didn't answer
  * The form treats anything but 200 as "couldn't send" and offers Telegram / email with the text filled in.
  *
+ * POST /inbound → Resend's `email.received` webhook: forwards mail sent to pr@ivanbogush.ru to FORWARD_TO (inbound.ts).
+ *
  * GET /health → { ok: true, relay } for checks; `relay` is true when the request came through the relay with its key.
  *
- * Visitors in Russia reach this through the relay at form.ivanbogush.ru (relay/setup.sh), because Russian ISPs slow
- * Cloudflare down. Cloudflare then sees only the relay's address, so the relay sends the visitor's along as X-Relay-IP,
- * signed with X-Relay-Key. With the right key (the RELAY_KEY secret) the rate limit counts that address instead.
+ * Russian ISPs slow Cloudflare down, so ivanbogush.ru points at a relay outside Cloudflare (relay/setup.sh), which
+ * passes every request on to this Worker's workers.dev address. Cloudflare then sees only the relay's address, so the
+ * relay sends the visitor's along as X-Relay-IP, signed with X-Relay-Key. With the right key (the RELAY_KEY secret)
+ * the rate limit counts that address instead.
  *
  * The Worker stores nothing: the message goes to the mailbox and the bot; the bot keeps the click counts.
  */
 
-export interface Env {
+import { handleInbound, type InboundEnv } from "./inbound.ts";
+
+export interface Env extends InboundEnv {
 	RESEND_API_KEY?: string;
 	RELAY_KEY?: string;
 	MAIL_TO: string;
 	MAIL_FROM: string;
 	ALLOWED_ORIGINS: string;
 	LIMITER?: RateLimit;
-	/** the leads bot's endpoint, e.g. https://form.ivanbogush.ru/bot/event */
+	/** the leads bot's endpoint, e.g. https://ivanbogush.ru/bot/event (the relay hands /bot/* to the bot) */
 	LEADS_URL?: string;
 	/** its key (a secret; the bot has the same one in /etc/portfolio-leads-bot/env) */
 	LEADS_KEY?: string;
+	/** the site: ../out, the static export (wrangler.jsonc "assets"). Tests run without it. */
+	ASSETS?: Fetcher;
 }
+
+/** Where the site's forms post (lib/submit.ts). */
+const FORM_PATH = "/api/form";
 
 /** The part of the runtime's context the Worker uses: work that may finish after the answer has gone. */
 type Later = Pick<ExecutionContext, "waitUntil">;
@@ -221,73 +236,86 @@ async function sendWithResend(env: Env, mail: ReturnType<typeof buildEmail>): Pr
 	return res.ok;
 }
 
+/** The contact form, the feedback on previews and the «Показать» events: POST /api/form (and POST /). */
+async function handleForm(request: Request, env: Env, ctx?: Later): Promise<Response> {
+	// after the answer when the runtime allows it (tests call without a context: then it just runs)
+	const later = (work: Promise<void>) => (ctx ? ctx.waitUntil(work) : void work);
+	const origin = allowedOrigin(request, env);
+
+	if (request.method === "OPTIONS") {
+		if (!origin) return new Response(null, { status: 403 });
+		return new Response(null, {
+			status: 204,
+			headers: {
+				"Access-Control-Allow-Origin": origin,
+				"Access-Control-Allow-Methods": "POST, OPTIONS",
+				"Access-Control-Allow-Headers": "Content-Type",
+				"Access-Control-Max-Age": "86400",
+				Vary: "Origin",
+			},
+		});
+	}
+	if (request.method !== "POST") return json({ error: "method" }, 405, origin);
+	if (!origin) return json({ error: "origin" }, 403, null);
+
+	if (env.LIMITER) {
+		const { success } = await env.LIMITER.limit({ key: visitorIp(request, env) });
+		if (!success) return json({ error: "rate_limited" }, 429, origin);
+	}
+
+	let body: Record<string, unknown>;
+	try {
+		const raw = await request.text();
+		if (raw.length > 20_000) return json({ error: "too_large" }, 413, origin);
+		body = JSON.parse(raw);
+		if (!body || typeof body !== "object") throw new Error("not an object");
+	} catch {
+		return json({ error: "bad_json" }, 400, origin);
+	}
+
+	// Honeypot: people never see the `website` field, bots fill it in. Pretend it worked.
+	if (clip(body.website, 200)) return json({ ok: true }, 200, origin);
+
+	const ip = visitorIp(request, env);
+
+	if (body.kind === "event") {
+		const event = parseEvent(body);
+		if ("error" in event) return json(event, 400, origin);
+		later(tellBot(env, { type: "show", ip, work: event.work }));
+		return json({ ok: true }, 200, origin);
+	}
+
+	const enquiry = parseEnquiry(body);
+	if ("error" in enquiry) return json(enquiry, 400, origin);
+
+	let sent = false;
+	if (env.RESEND_API_KEY) {
+		try {
+			sent = await sendWithResend(env, buildEmail(enquiry));
+		} catch (err) {
+			console.error("resend unreachable", err);
+		}
+	}
+	const { kind, ...fields } = enquiry;
+	later(tellBot(env, { type: kind, ip, ...fields, mailed: sent }));
+
+	if (!env.RESEND_API_KEY) return json({ error: "not_configured" }, 503, origin);
+	return sent ? json({ ok: true }, 200, origin) : json({ error: "send_failed" }, 502, origin);
+}
+
 export default {
 	async fetch(request: Request, env: Env, ctx?: Later): Promise<Response> {
-		// after the answer when the runtime allows it (tests call without a context: then it just runs)
-		const later = (work: Promise<void>) => (ctx ? ctx.waitUntil(work) : void work);
-		const origin = allowedOrigin(request, env);
+		const { pathname } = new URL(request.url);
+		const read = request.method === "GET" || request.method === "HEAD";
 
-		if (request.method === "OPTIONS") {
-			if (!origin) return new Response(null, { status: 403 });
-			return new Response(null, {
-				status: 204,
-				headers: {
-					"Access-Control-Allow-Origin": origin,
-					"Access-Control-Allow-Methods": "POST, OPTIONS",
-					"Access-Control-Allow-Headers": "Content-Type",
-					"Access-Control-Max-Age": "86400",
-					Vary: "Origin",
-				},
-			});
+		if (pathname === "/health" && read) {
+			return json({ ok: true, relay: viaRelay(request, env) }, 200, allowedOrigin(request, env));
 		}
-		if (request.method === "GET" && new URL(request.url).pathname === "/health") {
-			return json({ ok: true, relay: viaRelay(request, env) }, 200, origin);
-		}
-		if (request.method !== "POST") return json({ error: "method" }, 405, origin);
-		if (!origin) return json({ error: "origin" }, 403, null);
+		// Resend's webhook for mail arriving at pr@ivanbogush.ru (inbound.ts): signed, no Origin, no rate limit.
+		if (pathname === "/inbound" && request.method === "POST") return handleInbound(request, env);
+		if (pathname === FORM_PATH || (pathname === "/" && !read)) return handleForm(request, env, ctx);
 
-		if (env.LIMITER) {
-			const { success } = await env.LIMITER.limit({ key: visitorIp(request, env) });
-			if (!success) return json({ error: "rate_limited" }, 429, origin);
-		}
-
-		let body: Record<string, unknown>;
-		try {
-			const raw = await request.text();
-			if (raw.length > 20_000) return json({ error: "too_large" }, 413, origin);
-			body = JSON.parse(raw);
-			if (!body || typeof body !== "object") throw new Error("not an object");
-		} catch {
-			return json({ error: "bad_json" }, 400, origin);
-		}
-
-		// Honeypot: people never see the `website` field, bots fill it in. Pretend it worked.
-		if (clip(body.website, 200)) return json({ ok: true }, 200, origin);
-
-		const ip = visitorIp(request, env);
-
-		if (body.kind === "event") {
-			const event = parseEvent(body);
-			if ("error" in event) return json(event, 400, origin);
-			later(tellBot(env, { type: "show", ip, work: event.work }));
-			return json({ ok: true }, 200, origin);
-		}
-
-		const enquiry = parseEnquiry(body);
-		if ("error" in enquiry) return json(enquiry, 400, origin);
-
-		let sent = false;
-		if (env.RESEND_API_KEY) {
-			try {
-				sent = await sendWithResend(env, buildEmail(enquiry));
-			} catch (err) {
-				console.error("resend unreachable", err);
-			}
-		}
-		const { kind, ...fields } = enquiry;
-		later(tellBot(env, { type: kind, ip, ...fields, mailed: sent }));
-
-		if (!env.RESEND_API_KEY) return json({ error: "not_configured" }, 503, origin);
-		return sent ? json({ ok: true }, 200, origin) : json({ error: "send_failed" }, 502, origin);
+		// everything else is the site; a path it doesn't have gets its 404 page
+		return env.ASSETS ? env.ASSETS.fetch(request) : new Response("Not found", { status: 404 });
 	},
 } satisfies ExportedHandler<Env>;

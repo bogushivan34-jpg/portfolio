@@ -1,0 +1,10 @@
+# Headers for the site's files, read by Cloudflare when the Worker is deployed (worker/wrangler.jsonc "assets");
+# never served itself. Everything else gets Cloudflare's default: browsers check back each time (ETag).
+
+# Next's scripts and styles: the file name changes whenever the content does.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# The previews' Vite builds: the same, hashed names (scripts/add-work.mjs).
+/previews/:id/assets/*
+  Cache-Control: public, max-age=31536000, immutable

@@ -1,25 +1,45 @@
-// The contact form's backend: takes a POST from the portfolio's form and emails it to Ivan through Resend.
-// Deployed with `npm run deploy` to <name>.<account>.workers.dev (ivanbogush.ru's DNS is at reg.ru, not Cloudflare).
+// ivanbogush.ru: the site (the static export of the Next.js app in ../out) and its contact form's backend, which emails
+// each message to Ivan through Resend. `npm run deploy` builds the site and deploys both to
+// ivanbogush-contact.bogushivan34.workers.dev; a push to main does the same (../.github/workflows/deploy.yml).
+// ivanbogush.ru's DNS is at reg.ru, not Cloudflare: the domain points at the relay on 45.136.228.66
+// (relay/README.md), which passes every request on to that workers.dev address.
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "ivanbogush-contact",
+	"account_id": "639d317c97ed878e2a0149a3d2b75577",
 	"main": "src/index.ts",
 	"compatibility_date": "2026-10-01",
 	"workers_dev": true,
 	"observability": { "enabled": true },
-	// Public settings. The secrets are RESEND_API_KEY, RELAY_KEY (the form.ivanbogush.ru relay's key, relay/README.md)
+	"assets": {
+		// `next build` in the parent folder writes it; the deploy script builds it first.
+		"directory": "../out",
+		"binding": "ASSETS",
+		// every page is <path>/index.html (next.config.mjs: trailingSlash), so /works and /works/ both open it
+		"html_handling": "auto-trailing-slash",
+		"not_found_handling": "404-page",
+		// The Worker's own paths. "/" too: the form on pages built before the move posts there (src/index.ts), and the
+		// Worker hands a GET of "/" on to the site.
+		"run_worker_first": ["/", "/api/*", "/inbound", "/health"]
+	},
+	// Public settings. The secrets are RESEND_API_KEY, RESEND_WEBHOOK_SECRET and FORWARD_TO (the pr@ forwarder,
+	// README.md), RELAY_KEY (the relay's key, relay/README.md)
 	// and LEADS_KEY (the leads bot's key, Desktop/Bots/portfolio-leads-bot), set with `npx wrangler secret put <NAME>`
 	// (and in .dev.vars for `wrangler dev`). Without RESEND_API_KEY it answers 503 and the form offers
 	// "send via Telegram / by email" with the message already filled in.
 	"vars": {
-		// The leads bot, on the relay's server: every message and every «Показать» on a preview go here too.
-		"LEADS_URL": "https://form.ivanbogush.ru/bot/event",
+		// The leads bot, on the relay's server (the relay hands /bot/* to it): every message and every «Показать» on a
+		// preview go here too.
+		"LEADS_URL": "https://ivanbogush.ru/bot/event",
 		"MAIL_TO": "pr@ivanbogush.ru",
 		// The sending address must be on a domain verified in Resend.
 		"MAIL_FROM": "Сайт ivanbogush.ru <form@ivanbogush.ru>",
-		// Pages allowed to post the form (CORS). Comma-separated. The http:// ones are for visitors who reach the site
-		// without HTTPS (GitHub Pages had no certificate for ivanbogush.ru at first).
-		"ALLOWED_ORIGINS": "https://ivanbogush.ru,https://www.ivanbogush.ru,http://ivanbogush.ru,http://www.ivanbogush.ru,http://localhost:3210"
+		// Mail arriving at these addresses is forwarded to the FORWARD_TO secret (src/inbound.ts), sent from FORWARD_FROM.
+		"FORWARD_FOR": "pr@ivanbogush.ru",
+		"FORWARD_FROM": "pr@ivanbogush.ru",
+		// Pages allowed to post the form. Comma-separated. The site posts to itself (ivanbogush.ru, or workers.dev when
+		// opened there), but browsers still send the Origin; localhost is the site run with `npm run dev`.
+		"ALLOWED_ORIGINS": "https://ivanbogush.ru,https://ivanbogush-contact.bogushivan34.workers.dev,http://localhost:3210"
 	},
 	// At most 3 submissions per visitor (by IP) per minute.
 	"ratelimits": [

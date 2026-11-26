@@ -962,14 +962,13 @@ export const contact = {
 };
 
 /*
- * The contact form. It posts to the Cloudflare Worker in worker/ (deployed as ivanbogush-contact), which emails the
- * enquiry through Resend. Russian ISPs slow Cloudflare down, so it goes through the relay at form.ivanbogush.ru
- * (worker/relay) first, and straight to workers.dev only if the relay can't be reached. On localhost it posts to the
- * Worker run locally instead.
+ * The contact form. It posts to the site's own Worker (worker/, deployed as ivanbogush-contact), which serves the
+ * site too and emails the enquiry through Resend: on the same domain, so through the same relay as the page itself
+ * (worker/relay). With `npm run dev` on localhost it posts to the Worker run locally (worker: `npm run dev`) instead.
  */
 export const formEndpoint = {
-  live: ["https://form.ivanbogush.ru", "https://ivanbogush-contact.bogushivan34.workers.dev"],
-  local: ["http://localhost:8788"],
+  live: "/api/form",
+  local: "http://localhost:8788/api/form",
 };
 
 export const form = {

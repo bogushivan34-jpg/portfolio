@@ -24,9 +24,9 @@ beforeEach(() => {
 	};
 });
 
-const post = (body, { origin = ORIGIN, env = baseEnv } = {}) =>
+const post = (body, { origin = ORIGIN, env = baseEnv, path = "/api/form" } = {}) =>
 	worker.fetch(
-		new Request("https://w.example/", {
+		new Request(`https://w.example${path}`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json", ...(origin ? { Origin: origin } : {}), "CF-Connecting-IP": "1.2.3.4" },
 			body: typeof body === "string" ? body : JSON.stringify(body),
@@ -83,12 +83,41 @@ test("refuses other origins", async () => {
 
 test("CORS preflight from an allowed page", async () => {
 	const res = await worker.fetch(
-		new Request("https://w.example/", { method: "OPTIONS", headers: { Origin: "http://localhost:3210" } }),
+		new Request("https://w.example/api/form", { method: "OPTIONS", headers: { Origin: "http://localhost:3210" } }),
 		baseEnv,
 	);
 	assert.equal(res.status, 204);
 	assert.equal(res.headers.get("Access-Control-Allow-Origin"), "http://localhost:3210");
 	assert.match(res.headers.get("Access-Control-Allow-Methods"), /POST/);
+});
+
+// ─── the site ───
+
+/** stands in for the static assets (../out): answers with the path it was asked for */
+const assets = (asked) => ({ fetch: async (req) => (asked.push(`${req.method} ${new URL(req.url).pathname}`), new Response("page")) });
+
+test("pages come from the site's static assets", async () => {
+	const asked = [];
+	const env = { ...baseEnv, ASSETS: assets(asked) };
+	for (const path of ["/", "/works/", "/previews/dilyara-soley/", "/no-such-page"]) {
+		const res = await worker.fetch(new Request(`https://w.example${path}`), env);
+		assert.equal(await res.text(), "page");
+	}
+	// the form's address and the webhook's, asked for with GET, are pages too (the site's 404)
+	await worker.fetch(new Request("https://w.example/inbound"), env);
+	assert.equal((await worker.fetch(new Request("https://w.example/api/form"), env)).status, 405);
+	assert.deepEqual(asked, ["GET /", "GET /works/", "GET /previews/dilyara-soley/", "GET /no-such-page", "GET /inbound"]);
+	assert.equal(sent.length, 0);
+});
+
+test("the form still works at POST /, where pages built before the move post", async () => {
+	const asked = [];
+	const res = await post(good, { path: "/", env: { ...baseEnv, ASSETS: assets(asked) } });
+	assert.equal(res.status, 200);
+	assert.equal(sent.length, 1);
+	assert.deepEqual(asked, []);
+	const pre = await worker.fetch(new Request("https://w.example/", { method: "OPTIONS", headers: { Origin: ORIGIN } }), baseEnv);
+	assert.equal(pre.status, 204);
 });
 
 test("503 without a Resend key, 502 when Resend refuses", async () => {
@@ -106,7 +135,7 @@ test("rate limit", async () => {
 
 const KEY = "k".repeat(64);
 const relayed = (headers) =>
-	new Request("https://w.example/", {
+	new Request("https://w.example/api/form", {
 		method: "POST",
 		headers: { "Content-Type": "application/json", Origin: ORIGIN, "CF-Connecting-IP": "45.136.228.66", ...headers },
 		body: JSON.stringify(good),
@@ -154,7 +183,7 @@ const toBot = () => sent.filter((s) => s.url === LEADS.LEADS_URL);
 async function postAndSettle(body, env) {
 	const pending = [];
 	const res = await worker.fetch(
-		new Request("https://w.example/", {
+		new Request("https://w.example/api/form", {
 			method: "POST",
 			headers: { "Content-Type": "application/json", Origin: ORIGIN, "CF-Connecting-IP": "1.2.3.4" },
 			body: JSON.stringify(body),

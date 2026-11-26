@@ -1,7 +1,7 @@
 #!/bin/sh
-# The form.ivanbogush.ru relay (README.md next to this file). Russian ISPs slow Cloudflare down, so the portfolio's
-# contact form posts to form.ivanbogush.ru: Caddy on a server outside Cloudflare, which hands each request to the
-# Worker (ivanbogush-contact.*.workers.dev) with the visitor's address, signed with the relay key.
+# The ivanbogush.ru relay (README.md next to this file). The site and its contact form run as a Cloudflare Worker,
+# and Russian ISPs slow Cloudflare down, so ivanbogush.ru points at Caddy on a server outside Cloudflare, which hands
+# each request to the Worker (ivanbogush-contact.*.workers.dev) with the visitor's address, signed with the relay key.
 #
 # It shares the server with the trouvere.ru relay (trouvere-backend/relay/setup.sh) and never rewrites that one's
 # config: it writes only /etc/caddy/sites/portfolio.caddy and /etc/caddy/portfolio-relay.key, adds
@@ -15,11 +15,15 @@
 # /etc/caddy/portfolio-relay.key (root only). The Worker needs the same key as its RELAY_KEY secret; from
 # portfolio/worker, without the key ever showing on screen:
 #   ssh root@<ip> cat /etc/caddy/portfolio-relay.key | npx wrangler secret put RELAY_KEY
-# Without a terminal: FORM_RELAY_KEY=<key> sh portfolio-relay.sh (or no key at all: it keeps this server's).
+# Without a terminal: PORTFOLIO_RELAY_KEY=<key> sh portfolio-relay.sh (or no key at all: it keeps this server's).
 # Run it again any time.
 #
-# form.ivanbogush.ru/bot/* goes to the leads bot on this server instead (Desktop/Bots/portfolio-leads-bot).
-# Optional: FORM_DOMAIN (default form.ivanbogush.ru), FORM_UPSTREAM (default ivanbogush-contact.bogushivan34.workers.dev).
+# ivanbogush.ru/bot/* goes to the leads bot on this server instead (Desktop/Bots/portfolio-leads-bot).
+# Optional: PORTFOLIO_DOMAIN (default ivanbogush.ru), PORTFOLIO_UPSTREAM (default
+# ivanbogush-contact.bogushivan34.workers.dev).
+#
+# Until 2026-11-26 the site was on GitHub Pages and only the form came here, as form.ivanbogush.ru; running this
+# replaces that with ivanbogush.ru.
 set -eu
 
 step() { printf '\n== %s\n' "$*"; }
@@ -37,9 +41,11 @@ command -v systemctl >/dev/null 2>&1 || fail "This server has no systemd."
 # values this script wrote last time, read back from its own site file
 kept() { sed -n "s/^# $1: //p" "$SITE" 2>/dev/null || true; }
 
-domain=${FORM_DOMAIN:-$(kept domain)}
-domain=${domain:-form.ivanbogush.ru}
-upstream=${FORM_UPSTREAM:-$(kept upstream)}
+domain=${PORTFOLIO_DOMAIN:-$(kept domain)}
+# form.ivanbogush.ru is what this script served before the site moved here
+[ "$domain" != form.ivanbogush.ru ] || domain=""
+domain=${domain:-ivanbogush.ru}
+upstream=${PORTFOLIO_UPSTREAM:-$(kept upstream)}
 upstream=${upstream:-ivanbogush-contact.bogushivan34.workers.dev}
 for name in "$domain" "$upstream"; do
 	case $name in "" | *[!a-z0-9.-]*) fail "Not a domain name: $name" ;; esac
@@ -53,7 +59,7 @@ case $BOT_PORT in *[!0-9]*) fail "Not a port: $BOT_PORT" ;; esac
 
 step "Relay key"
 old=$(cat "$KEYFILE" 2>/dev/null || true)
-key=${FORM_RELAY_KEY:-}
+key=${PORTFOLIO_RELAY_KEY:-}
 made=""
 if [ -z "$key" ] && (exec </dev/tty) 2>/dev/null; then
 	if [ -n "$old" ]; then hint="Enter keeps this server's key"; else hint="Enter makes a new one"; fi
@@ -135,6 +141,7 @@ fi
 [ ! -f "$SITE" ] || { old_site=$SITE.bak-$stamp && cp -p "$SITE" "$old_site"; }
 [ ! -f "$KEYFILE" ] || { old_key=$KEYFILE.bak-$stamp && cp -p "$KEYFILE" "$old_key"; }
 
+upstream_re=$(printf '%s' "$upstream" | sed 's/\./\\./g')
 (umask 077 && printf '%s\n' "$key" > "$KEYFILE")
 (
 	umask 027
@@ -152,6 +159,7 @@ $domain {
 		reverse_proxy 127.0.0.1:$BOT_PORT
 	}
 
+	# Everything else is the site and its form: the Worker serves both.
 	handle {
 		reverse_proxy https://$upstream {
 			# Cloudflare only answers for hostnames it serves, so ask for the Worker's, in TLS (SNI) and in Host.
@@ -164,6 +172,9 @@ $domain {
 			# Worker can use it for its rate limit (anyone could write X-Relay-IP; only the relay knows the key).
 			header_up X-Relay-IP {remote_host}
 			header_up X-Relay-Key "$key"
+
+			# The Worker answers as $upstream: a redirect to it sends visitors back to $domain instead.
+			header_down Location \`^https://$upstream_re(/|\$)\` \`https://$domain\$1\`
 		}
 	}
 }
@@ -246,6 +257,8 @@ if [ -n "$here" ] && [ "$points" = "$here" ]; then
 	done
 	if [ "$code" = 200 ]; then
 		echo "ok   https://$domain works, certificate and all"
+		code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 --resolve "$domain:443:127.0.0.1" "https://$domain/" || true)
+		if [ "$code" = 200 ]; then echo "ok   the site opens through it"; else echo "!!   https://$domain/ answers $code: is the site deployed? (portfolio/worker: npm run deploy)"; fi
 	else
 		echo "!!   https://$domain doesn't answer yet"
 		todo="$todo
@@ -254,11 +267,16 @@ if [ -n "$here" ] && [ "$points" = "$here" ]; then
 else
 	echo "--   $domain points at ${points:-nothing}, this server is ${here:-unknown}"
 	todo="$todo
-- DNS (at reg.ru): an A record for $domain -> ${here:-this server's IPv4}, and no AAAA. Caddy gets the
-  certificate by itself a few seconds after it points here; run this again to see every check pass."
+- DNS (at reg.ru): one A record for $domain -> ${here:-this server's IPv4}, in place of the ones there now, and no
+  AAAA. Caddy gets the certificate by itself once it points here; run this again to see every check pass."
 fi
 [ -z "$v6" ] || todo="$todo
 - $domain also has IPv6 (AAAA) records: $v6. Delete them, unless that's this server: Let's Encrypt tries
   IPv6 first."
+# the old form.ivanbogush.ru, which nothing serves any more
+if [ "$domain" = ivanbogush.ru ] && getent ahostsv4 form.ivanbogush.ru >/dev/null 2>&1; then
+	todo="$todo
+- DNS (at reg.ru): delete the A record for form.ivanbogush.ru; nothing answers there any more."
+fi
 
 if [ -n "$todo" ]; then printf '\nLeft to do:%s\n' "$todo"; else printf '\nAll done: the relay is live.\n'; fi
