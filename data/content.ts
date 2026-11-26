@@ -14,6 +14,8 @@
  *   removed from the site); he gave ranges, the site shows the middle of each. Raw figures on disk, not in this repo
  *   (artlogos-metrics-2026-11-23.md, gitignored). No figure for paid lessons, so the funnel stops at the booking click.
  * - Южное небо Тавриды: tour/southern-sky-project, tour/flyers; live at неботавриды.рф (screenshot taken 10 November 2026).
+ *   The booklet (tour/booklet-astrokanikuly): Ivan's photos of the printed copy, 26 November 2026, straightened and
+ *   cropped; a corner the photo cut off is plain background in the design, filled in.
  * - ArtЛогос site: live at artlogos.fun.
  * - ПроДостояние.Крым: makam/deploy-reg-ru (page and archive counts), makam/presentation. Search figures (Yandex
  *   Webmaster, Google Search Console), indexation and the visitor funnel (Metrica) for the first six months given by
@@ -61,6 +63,8 @@ export interface CaseItem {
     note: L;
   };
   shot: Shot;
+  /* Photos of the work in print, in a row under the screenshot at one height. */
+  photos?: { shots: Shot[]; caption: L };
 }
 
 export const profile = {
@@ -445,6 +449,29 @@ export const cases: CaseItem[] = [
       width: 1600,
       height: 1000,
       alt: { ru: "Главный экран сайта «Южное небо Тавриды»", en: "The Southern Sky of Taurida home screen" },
+    },
+    photos: {
+      shots: [
+        {
+          src: "/images/southern_sky_booklet_cover.jpg",
+          width: 348,
+          height: 750,
+          alt: { ru: "Обложка буклета «Астроканикулы в Тавриде»", en: "Cover of the “Astro holidays in Taurida” booklet" },
+        },
+        {
+          src: "/images/southern_sky_booklet_spread.jpg",
+          width: 1064,
+          height: 750,
+          alt: {
+            ru: "Разворот буклета: 12 маршрутов в 5 циклах, пример трёх дней, кто ведёт и как записаться",
+            en: "Inside the booklet: 12 routes in 5 cycles, a sample three days, the guides and how to book",
+          },
+        },
+      ],
+      caption: {
+        ru: "Буклет «Астроканикулы в Тавриде» в печати: обложка и разворот",
+        en: "The “Astro holidays in Taurida” booklet in print: cover and inside",
+      },
     },
   },
   {

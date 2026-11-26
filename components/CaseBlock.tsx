@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Figure from "@/components/Figure";
 import { CaseItem, Lang, caseLabels } from "@/data/content";
 
@@ -46,8 +47,34 @@ export default function CaseBlock({ item, lang }: { item: CaseItem; lang: Lang }
 
       <div className="lg:col-span-5">
         <Figure shot={item.shot} lang={lang} href={item.link?.url} />
+        {item.photos && <PhotoRow photos={item.photos} lang={lang} />}
       </div>
     </article>
+  );
+}
+
+/* Photos side by side at one height: each column is as wide as its photo's proportions. Clicking opens it full size. */
+function PhotoRow({ photos, lang }: { photos: NonNullable<CaseItem["photos"]>; lang: Lang }) {
+  return (
+    <figure className="mt-6">
+      <div
+        className="grid gap-3"
+        style={{ gridTemplateColumns: photos.shots.map((s) => `minmax(0, ${(s.width / s.height).toFixed(3)}fr)`).join(" ") }}
+      >
+        {photos.shots.map((shot) => (
+          <a
+            key={shot.src}
+            href={shot.src}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block overflow-hidden rounded-xl border border-line bg-paper"
+          >
+            <Image src={shot.src} alt={shot.alt[lang]} width={shot.width} height={shot.height} className="h-auto w-full" />
+          </a>
+        ))}
+      </div>
+      <figcaption className="mt-2 text-[14px] text-muted">{photos.caption[lang]}</figcaption>
+    </figure>
   );
 }
 
