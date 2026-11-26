@@ -17,7 +17,7 @@
  *
  * The work's title, pricing, intro (the line on the first screen) and story (why this client needs this site) are
  * read from the client's own file, ../Pitches/<client>/work.json, on every run: edit them there, not in
- * data/works.json.
+ * data/works.json. Em dashes in them are made hyphens first, in work.json itself (scripts/no-em-dashes.mjs).
  *
  * The client sites share one node_modules in ../Pitches (npm workspaces): `npm install` there once.
  */
@@ -27,6 +27,7 @@ import { existsSync, readFileSync, writeFileSync, readdirSync, statSync, rmSync,
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { fixNotes } from "./no-em-dashes.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const worksFile = path.join(root, "data", "works.json");
@@ -65,6 +66,12 @@ if (existsSync(about)) {
     own = JSON.parse(readFileSync(about, "utf8"));
   } catch (e) {
     fail(`${client}/work.json isn't valid JSON: ${e.message}`);
+  }
+  // Em dashes become hyphens in the title, intro and story, in work.json itself (scripts/no-em-dashes.mjs).
+  const dashes = fixNotes(own);
+  if (dashes.length) {
+    writeFileSync(about, JSON.stringify(own, null, 2) + "\n");
+    console.log(`Em dashes → hyphens in ${client}/work.json: ${dashes.map((d) => d.where).join(", ")}`);
   }
 }
 
