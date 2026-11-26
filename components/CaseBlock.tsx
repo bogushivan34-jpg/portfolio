@@ -63,7 +63,9 @@ function Funnel({ funnel, lang }: { funnel: NonNullable<CaseItem["funnel"]>; lan
             <li key={idx}>
               <p className="text-[15px] leading-[1.4] text-ink">{step.label[lang]}</p>
               <div className="mt-2 flex items-center gap-3">
-                <span className="num w-11 shrink-0 text-right text-[15px]">{step.pct}%</span>
+                <span className="num w-12 shrink-0 text-right text-[15px]">
+                  {step.pct.toLocaleString(lang === "ru" ? "ru-RU" : "en-US")}%
+                </span>
                 <span className="h-2.5 flex-1 overflow-hidden rounded-full bg-line">
                   <span className="block h-full rounded-full bg-accent" style={{ width: `${step.pct}%` }} />
                 </span>

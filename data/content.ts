@@ -15,7 +15,11 @@
  *   (artlogos-metrics-2026-11-23.md, gitignored). No figure for paid lessons, so the funnel stops at the booking click.
  * - Южное небо Тавриды: tour/southern-sky-project, tour/flyers; live at неботавриды.рф (screenshot taken 10 November 2026).
  * - ArtЛогос site: live at artlogos.fun.
- * - ПроДостояние.Крым: makam/deploy-reg-ru (page and archive counts), makam/presentation.
+ * - ПроДостояние.Крым: makam/deploy-reg-ru (page and archive counts), makam/presentation. Search figures (Yandex
+ *   Webmaster, Google Search Console), indexation and the visitor funnel (Metrica) for the first six months given by
+ *   Ivan on 26 November 2026; the case shows month 6. Raw figures on disk, not in this repo
+ *   (prodostoyanie-metrics-2026-11-26.md, gitignored). The site is down for maintenance (November 2026), so the case
+ *   has no link.
  * - Education, languages: MGIK documents.
  * - Legal name, tax status, INN and phone: given by Ivan for the YooKassa application (YOOKASSA_REQUIREMENTS.md).
  * - YooKassa: the shop is approved, per Ivan on 15 November 2026; he sends clients its payment links.
@@ -444,10 +448,13 @@ export const cases: CaseItem[] = [
     id: "prodostoyanie",
     title: { ru: "ПроДостояние.Крым", en: "ProDostoyanie.Crimea" },
     meta: { ru: "Наследие народов Крыма · некоммерческий проект · 2026", en: "Heritage of the peoples of Crimea · non-profit · 2026" },
-    role: { ru: "Сайт-галерея, презентация доклада, афиша", en: "Gallery website, conference deck, poster" },
+    role: {
+      ru: "Сайт-галерея, поисковое продвижение, презентация доклада, афиша",
+      en: "Gallery website, search optimisation, conference deck, poster",
+    },
     task: {
-      ru: "Руководителю проекта предстояло выступить на всероссийской конференции Российской ассоциации реставраторов и показать проект как работающую площадку, а не набор слайдов.",
-      en: "The project lead was to speak at a national conference of the Russian Association of Restorers, and needed to show the project as a working platform rather than a set of slides.",
+      ru: "Руководителю проекта предстояло выступить на всероссийской конференции Российской ассоциации реставраторов и показать проект как работающую площадку, а не набор слайдов. А после конференции архив должны были находить через поиск, без рекламного бюджета.",
+      en: "The project lead was to speak at a national conference of the Russian Association of Restorers, and needed to show the project as a working platform rather than a set of slides. After the conference, people had to find the archive through search, with no ad budget.",
     },
     did: [
       {
@@ -459,13 +466,56 @@ export const cases: CaseItem[] = [
         en: "Made a 3D hall of musical instruments: each one can be rotated and heard.",
       },
       {
+        ru: "Открыл для Яндекса и Google все 2 901 страницу: карта сайта, один адрес у каждого экспоната и мастера, перекрёстные ссылки между залами, досье и статьями.",
+        en: "Opened all 2,901 pages to Yandex and Google: a sitemap, one address for each exhibit and master, cross-links between halls, dossiers and articles.",
+      },
+      {
         ru: "Подготовил презентацию доклада на 15 минут и афишу концерта в Ханском дворце для музея-заповедника.",
         en: "Prepared a 15-minute talk deck and a concert poster for the museum-reserve at the Khan's Palace.",
       },
     ],
     result: {
-      ru: "2 901 страница, 2 741 запись архива и 115 досье мастеров на одной площадке, готовой к конференции.",
-      en: "2,901 pages, 2,741 archive entries and 115 master dossiers on one platform, ready for the conference.",
+      ru: "2 901 страница, 2 741 запись архива и 115 досье мастеров на одной площадке. Площадку показали на конференции, а дальше её находят через поиск: Яндекс индексирует 94% страниц, Google — 86%, на рекламу не потрачено ни рубля.",
+      en: "2,901 pages, 2,741 archive entries and 115 master dossiers on one platform. It was shown at the conference, and since then people find it through search: Yandex indexes 94% of the pages, Google 86%, with nothing spent on ads.",
+    },
+    funnel: {
+      headline: {
+        value: { ru: "5 200 в месяц", en: "5,200 a month" },
+        label: {
+          ru: "переходов из Яндекса и Google на шестой месяц после запуска (в первый — 310). 85% из них — по запросам о мастерах, ремёслах и инструментах, а не по названию проекта",
+          en: "visits from Yandex and Google in the sixth month after launch (310 in the first). 85% of them come from searches for masters, crafts and instruments, not for the project's name",
+        },
+      },
+      title: { ru: "Путь посетителя из поиска", en: "How search visitors move through the site" },
+      steps: [
+        { label: { ru: "Пришли из Яндекса или Google", en: "Came from Yandex or Google" }, pct: 100 },
+        { label: { ru: "Остались смотреть залы и архив", en: "Stayed to browse the halls and the archive" }, pct: 62 },
+        {
+          label: {
+            ru: "Повернули 3D-инструмент, искали по архиву или дочитали досье мастера",
+            en: "Rotated a 3D instrument, searched the archive or read a master's dossier to the end",
+          },
+          pct: 21,
+        },
+        {
+          label: {
+            ru: "Открыли страницы участия: «Принести своё», «Микрозадачи», «Я — носитель традиции», «Школа»",
+            en: "Opened the pages for taking part: “Bring your own”, “Microtasks”, “I am a tradition bearer”, “School”",
+          },
+          pct: 2.94,
+        },
+        {
+          label: {
+            ru: "Прислали материалы, взяли микрозадачу или подали заявку",
+            en: "Sent materials, took a microtask or applied",
+          },
+          pct: 0.54,
+        },
+      ],
+      note: {
+        ru: "Полоса — доля от всех, кто пришёл из поиска, справа — переход с предыдущего шага. В месяц это 28 действий: семейные фото и записи, расшифровки и переводы, заявки мастеров, записи в школу и запросы от музеев и школ о партнёрстве.",
+        en: "Each bar is a share of everyone who came from search; on the right, the rate from the step before. That comes to 28 actions a month: family photos and recordings, transcriptions and translations, applications from masters, school sign-ups and partnership requests from museums and schools.",
+      },
     },
     shot: {
       src: "/images/prodostoyanie_museum.jpg",
