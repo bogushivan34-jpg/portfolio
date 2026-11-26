@@ -28,6 +28,8 @@ ssr-check.html
 ИВАН БОГУШ.txt
 # original photo; the site uses public/images/ivan_bogush.jpg
 me.jpg
+# clients' Telegram reviews as Ivan gave them; the site uses smaller copies in public/images/reviews
+telegram-reviews/
 # working notes for the YooKassa application
 YOOKASSA_REQUIREMENTS.md
 # raw Trouvère metrics as Ivan gave them; the site shows a selection (data/content.ts)

@@ -25,6 +25,8 @@
  * - YooKassa: the shop is approved, per Ivan on 15 November 2026; he sends clients its payment links.
  *   Card and SBP are what the legal pages already named; correct `preview.pricing.official.pay` if the shop gives more.
  * - Prices: given by Ivan on 11 November 2026 as provisional ("not a final version"), see `prices` below.
+ * - Reviews: clients' Telegram messages, screenshots given by Ivan on 26 November 2026 (telegram-reviews/, kept on disk,
+ *   not in this repo). The site shows them as they are, smaller (public/images/reviews); the alt text is their words.
  *
  * Every number here is real. What wasn't measured is left out rather than explained away.
  */
@@ -83,6 +85,7 @@ export const profile = {
 
 export const nav: { id: string; label: L; page?: string }[] = [
   { id: "work", label: { ru: "Кейсы", en: "Work" } },
+  { id: "reviews", label: { ru: "Отзывы", en: "Reviews" } },
   { id: "approach", label: { ru: "Подход", en: "Approach" } },
   // a tab of its own, not a section of the main page
   { id: "services", label: { ru: "Услуги", en: "Services" }, page: "/services/" },
@@ -525,6 +528,55 @@ export const cases: CaseItem[] = [
     },
   },
 ];
+
+/*
+ * Clients' reviews: the Telegram messages themselves, cropped screenshots rather than retyped quotes. In this order
+ * three columns come out even: Мария's long one, then Алиса's, then the three short ones under each other.
+ */
+export const reviews = {
+  title: { ru: "Отзывы", en: "Reviews" } as L,
+  lead: {
+    ru: "Что клиенты написали мне в Telegram, как есть.",
+    en: "What clients wrote to me on Telegram, as they wrote it (in Russian).",
+  } as L,
+  items: [
+    {
+      src: "/images/reviews/maria.jpg",
+      width: 480,
+      height: 1206,
+      name: { ru: "Мария", en: "Maria" },
+      text: "Хочу сказать огромное спасибо Ивану Богушу за создание сайта для нашей школы! С Иваном было правда очень легко и приятно сотрудничать. Он внимательно выслушивал все мои пожелания, без проблем вносил правки и старался сделать ровно так, как я себе представляла. По ходу работы с моей стороны было много правок и мелких деталей, и я очень ценю его терпение, ответственность и внимательный подход. В итоге сайт вышел современным, красивым и удобным — именно таким, каким я и хотела его видеть. Смело рекомендую Ивана как грамотного и надежного специалиста. Я осталась очень довольна нашей работой и точно вернусь к нему с новыми проектами. Большое спасибо за отличный результат и комфортное общение!",
+    },
+    {
+      src: "/images/reviews/alisa.jpg",
+      width: 427,
+      height: 840,
+      name: { ru: "Алиса", en: "Alisa" },
+      text: "Иван, большое спасибо за отличный сайт-визитку! Вышло даже круче, чем я себе представлял. Смотрится стильно, современно, ничего лишнего - все логично и на своих местах. Отдельно хочу похвалить крутого чат-бота, который задает правильные вопросы и сам собирает ТЗ по твоим ответам. Безумно удобная штука, особенно когда сам толком не знаешь, как сформулировать свои хотелки. В итоге не пришлось тратить кучу времени на долгие созвоны и объяснения. Весь процесс прошел максимально просто, а результат порадовал. Видно, что Иван думает не только про код, но и про удобство клиента. Твердая 5+, рекомендую!",
+    },
+    {
+      src: "/images/reviews/darya.jpg",
+      width: 480,
+      height: 322,
+      name: { ru: "Дарья", en: "Darya" },
+      text: "Результатом довольна на 100%! Задачу (сделать сайт + подключить платежную систему) Иван выполнил четко, все работает без сбоев. Спасибо отдельно за оперативность, поддержку и то, что всегда на связи. Рекомендую!",
+    },
+    {
+      src: "/images/reviews/katya.jpg",
+      width: 480,
+      height: 362,
+      name: { ru: "Катя", en: "Katya" },
+      text: "Большое спасибо за отличную работу! От нового сайта я просто в восторге. Сделали все нереально быстро, буквально за день, и качество при этом супер. Выглядит стильно, работает все без проблем. Очень довольна и точно буду советовать вас друзьям и коллегам!",
+    },
+    {
+      src: "/images/reviews/natalya.jpg",
+      width: 434,
+      height: 393,
+      name: { ru: "Наталья", en: "Natalya" },
+      text: "Все отлично. Оперативно, вежливо и профессионально. Сайт получился удобным и стильным. P.S. спокойно ответил на все мои глупые вопросы и не стал брать доплату за мелкие правки, о которых заранее не договаривались.",
+    },
+  ] as { src: string; width: number; height: number; name: L; text: string }[],
+};
 
 export const approach = {
   title: { ru: "Подход", en: "Approach" } as L,
