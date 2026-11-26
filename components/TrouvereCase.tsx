@@ -118,8 +118,12 @@ export default function TrouvereCase({ lang }: { lang: Lang }) {
           </h4>
           <p className="mt-3">{t.community.lead[lang]}</p>
           <ul className="mt-7 grid gap-x-8 gap-y-6 sm:grid-cols-2">
-            {t.community.points.map((p, idx) => (
-              <li key={idx} className="border-t border-line pt-4">
+            {t.community.points.map((p, idx, all) => (
+              // an odd last point takes the whole row
+              <li
+                key={idx}
+                className={`border-t border-line pt-4 ${all.length % 2 && idx === all.length - 1 ? "sm:col-span-2" : ""}`}
+              >
                 <p className="font-semibold text-ink">{p.title[lang]}</p>
                 <p className="mt-1 text-[16px] leading-[1.55]">{p.text[lang]}</p>
               </li>
@@ -136,7 +140,7 @@ export default function TrouvereCase({ lang }: { lang: Lang }) {
         {t.brandTitle[lang]}
       </h4>
       <p className="mt-3 max-w-[760px]">{t.brand[lang]}</p>
-      <div className="mt-7 grid gap-5 sm:grid-cols-3">
+      <div className="mt-7 grid gap-5 sm:grid-cols-2">
         {t.shots.map((shot) => (
           <Figure key={shot.src} shot={shot} lang={lang} crop />
         ))}

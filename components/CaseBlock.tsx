@@ -25,7 +25,8 @@ export default function CaseBlock({ item, lang }: { item: CaseItem; lang: Lang }
         <ul className="mt-2 space-y-2">
           {item.did.map((line, idx) => (
             <li key={idx} className="flex gap-3">
-              <span aria-hidden="true" className="mt-[13px] h-px w-3 shrink-0 bg-muted" />
+              {/* ⁙ in place of a dash, Ivan's choice of 26 November 2026 */}
+              <span aria-hidden="true" className="shrink-0 text-muted">⁙</span>
               <span>{line[lang]}</span>
             </li>
           ))}

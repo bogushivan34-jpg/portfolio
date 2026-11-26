@@ -5,10 +5,14 @@
  * - Trouvère: 113 active paying subscribers, the funnel, channels, retention, bot reach and costs for the 6 months to
  *   22 November 2026 given by Ivan on 22 November 2026; his raw figures are kept on disk, not in this public repo
  *   (trouvere-metrics-2026-11-22.md, gitignored). 40+ Instagram followers given by Ivan (November 2026);
- *   reel figures from Instagram insights (trouvere-social/.../content-plan/src/content/posts.ts);
+ *   reel figures from Instagram insights (trouvere-social/.../content-plan/src/content/posts.ts); ~50 000 views for
+ *   the whole account given by Ivan on 26 November 2026.
  *   channels from TROUVERE.APP/PR, Desktop/Bots and trouvere-social (brand kit, reels, Discord).
- *   The bots (Картограф, the MGIK schedule bot) and their dashboard (Desktop/Bots/inspector) are told inside
- *   Trouvère, without names.
+ *   The bots (Картограф and 24 timetable bots for different universities; 4 800 a month is all of them together, per
+ *   Ivan on 26 November 2026) and their dashboard (Desktop/Bots/inspector) are told inside Trouvère, without names.
+ *   On 26 November 2026 Ivan asked for one channel to go from the page in any form, its row in the channels table
+ *   included, so the rows no longer add up to the funnel; and he said the weekly Discord ear test wasn't true. Both
+ *   are gone.
  * - ArtЛогос: MusicSchoolMeta/specs.md; the outcome is reported by the school's owners. The funnel and the local
  *   search figure are from the site's analytics as Ivan gave them on 23 November 2026 (the counter has since been
  *   removed from the site); he gave ranges, the site shows the middle of each. Raw figures on disk, not in this repo
@@ -125,17 +129,18 @@ export const proof: { value: L; label: L }[] = [
     },
   },
   {
-    value: { ru: "~10 000", en: "~10,000" },
+    value: { ru: "~50 000", en: "~50,000" },
     label: {
-      ru: "просмотров одного Reels на аккаунте с 40 подписчиками",
-      en: "views on one reel, from an account with 40 followers",
+      ru: "просмотров у аккаунта Trouvère с 40 подписчиками",
+      en: "views for a Trouvère account with 40 followers",
     },
   },
   {
-    value: { ru: "5", en: "5" },
+    // ПроДостояние.Крым, search visits in month 1 and month 6 (see the case below): 5 200 / 310 = 16.8
+    value: { ru: "×17", en: "×17" },
     label: {
-      ru: "сайтов под ключ: школа, экскурсии, музейный проект, каталог, приложение",
-      en: "websites delivered: a school, tours, a heritage project, a directory, an app",
+      ru: "рост переходов из поиска за полгода у сайта о наследии народов Крыма: с 310 до 5 200 в месяц, без рекламы",
+      en: "growth in search visits in six months for a site on the heritage of Crimea's peoples: from 310 to 5,200 a month, with no ads",
     },
   },
 ];
@@ -215,14 +220,13 @@ export const trouvere = {
       revenue: { ru: "Доля выручки", en: "Share of revenue" },
     } as Record<"channel" | "visits" | "paid" | "revenue", L>,
     rows: [
-      { channel: { ru: "Каталог приложений", en: "App directory" }, visits: { ru: "2 450", en: "2,450" }, paid: "58", revenue: "39%" },
       { channel: { ru: "Telegram-боты", en: "Telegram bots" }, visits: { ru: "3 680", en: "3,680" }, paid: "55", revenue: "35%" },
       { channel: { ru: "Короткие ролики", en: "Short videos" }, visits: { ru: "4 920", en: "4,920" }, paid: "27", revenue: "16%" },
       { channel: { ru: "Прямые заходы и рекомендации", en: "Direct visits and referrals" }, visits: { ru: "850", en: "850" }, paid: "16", revenue: "10%" },
     ] as { channel: L; visits: L; paid: string; revenue: string }[],
     note: {
-      ru: "Каталог и боты, которые мы построили сами, приносят 74% выручки. Канал считается по последнему переходу с UTM-меткой перед оплатой.",
-      en: "The directory and the bots, both built by us, bring 74% of revenue. A payment counts toward the last UTM-tagged visit before it.",
+      ru: "Telegram-боты, которые мы построили сами, приносят 35% выручки. Канал считается по последнему переходу с UTM-меткой перед оплатой.",
+      en: "The Telegram bots, built by us, bring 35% of revenue. A payment counts toward the last UTM-tagged visit before it.",
     } as L,
   },
   channelsTitle: {
@@ -233,22 +237,15 @@ export const trouvere = {
     {
       title: { ru: "Reels, которые смотрят не подписчики", en: "Reels that travel beyond followers" },
       text: {
-        ru: "Короткие анимированные тесты на слух и истории о средневековой музыке. У лучшего ролика около 10 000 просмотров и 500 лайков, и почти все зрители увидели аккаунт впервые. За полгода с роликов пришло 4 920 визитов на сайт и 27 платящих подписчиков.",
-        en: "Short animated ear tests and stories about medieval music. The best reel has about 10,000 views and 500 likes, and nearly every viewer was seeing the account for the first time. In six months the videos brought 4,920 visits to the site and 27 paying subscribers.",
+        ru: "Короткие анимированные тесты на слух и истории о средневековой музыке. Всего у аккаунта около 50 000 просмотров. У лучшего ролика — около 10 000 просмотров и 500 лайков, и почти все его зрители увидели аккаунт впервые. За полгода с роликов пришло 4 920 визитов на сайт и 27 платящих подписчиков.",
+        en: "Short animated ear tests and stories about medieval music. The account has about 50,000 views in all. The best reel has about 10,000 views and 500 likes, and nearly all its viewers were seeing the account for the first time. In six months the videos brought 4,920 visits to the site and 27 paying subscribers.",
       },
     },
     {
       title: { ru: "Полезные Telegram-боты для сообществ", en: "Useful Telegram bots for communities" },
       text: {
-        ru: "Я сделал двух ботов, и каждый решает задачу самого сообщества. Библиотека фанатских карт для игры находит карту по описанию обычными словами, а бот с расписанием с октября показывает студентам вуза их пары. О Trouvère бот упоминает одной строкой и не чаще раза в три дня. Ботами пользуются 4 800 человек в месяц, 7,8% упоминаний заканчиваются переходом на сайт, а половина платящих подписчиков сначала пользовалась одним из ботов.",
-        en: "I built two bots, each solving the community's own problem. A library of fan-made maps for a game finds a map from a plain-words description, and since October a timetable bot has shown university students their classes. A bot mentions Trouvère in one line, at most once every three days. 4,800 people use the bots each month, 7.8% of mentions end in a visit to the site, and half of all paying subscribers used one of the bots first.",
-      },
-    },
-    {
-      title: { ru: "Каталог музыкальных приложений", en: "A directory of music apps" },
-      text: {
-        ru: "whichmusicapp.com — 74 приложения с фильтрами и сравнением. Он встречает людей в тот момент, когда они выбирают, чем заниматься, и Trouvère там один из вариантов. Поэтому отсюда приходят самые готовые к покупке: подписку оплачивают 10,2% зарегистрировавшихся, больше, чем из любого другого канала.",
-        en: "whichmusicapp.com lists 74 apps with filters and side-by-side comparison. It meets people at the moment they're choosing what to learn with, and Trouvère is one of the options. So the people it sends are the readiest to buy: 10.2% of those who register go on to pay, more than from any other channel.",
+        ru: "Каждый бот решает задачу своего сообщества: библиотека фанатских карт для игры находит карту по описанию обычными словами, а 24 бота с расписанием показывают студентам разных вузов их пары. О Trouvère бот упоминает одной строкой и не чаще раза в три дня. Всеми ботами вместе пользуются 4 800 человек в месяц, 7,8% упоминаний заканчиваются переходом на сайт, а половина платящих подписчиков сначала пользовалась одним из ботов.",
+        en: "Each bot solves its own community's problem: a library of fan-made maps for a game finds a map from a plain-words description, and 24 timetable bots show students at different universities their classes. A bot mentions Trouvère in one line, at most once every three days. 4,800 people a month use all the bots together, 7.8% of mentions end in a visit to the site, and half of all paying subscribers used one of the bots first.",
       },
     },
     {
@@ -267,8 +264,8 @@ export const trouvere = {
     },
   ] as { title: L; text: L }[],
   next: {
-    ru: "За полгода на привлечение ушло около $1 390: хостинг ботов, домены каталога и производство роликов. Это $8,90 на одного платящего подписчика при выручке около $12 в месяц с каждого, так что расходы окупаются в первый же месяц. Платную рекламу подключим следующим шагом: понятно, какие сообщения и каналы работают и сколько можно платить за подписчика.",
-    en: "Six months of acquisition cost about $1,390: bot hosting, the directory's domains and video production. That's $8.90 per paying subscriber against about $12 a month from each, so the cost is earned back in the first month. Paid ads are the next step: we know which messages and channels work, and how much a subscriber is worth paying for.",
+    ru: "За полгода на привлечение ушло около $1 390: хостинг ботов, домены и производство роликов. Это $8,90 на одного платящего подписчика при выручке около $12 в месяц с каждого, так что расходы окупаются в первый же месяц. Платную рекламу подключим следующим шагом: понятно, какие сообщения и каналы работают и сколько можно платить за подписчика.",
+    en: "Six months of acquisition cost about $1,390: bot hosting, domains and video production. That's $8.90 per paying subscriber against about $12 a month from each, so the cost is earned back in the first month. Paid ads are the next step: we know which messages and channels work, and how much a subscriber is worth paying for.",
   } as L,
   community: {
     title: {
@@ -280,13 +277,6 @@ export const trouvere = {
       en: "Trouvère runs on a subscription: people pay for as long as they keep learning. A reel or a bot can bring someone in once; what brings them back is a habit and other people learning alongside them. So we're building the community from the start, not leaving it for later.",
     } as L,
     points: [
-      {
-        title: { ru: "Повод вернуться каждую неделю", en: "A reason to come back every week" },
-        text: {
-          ru: "По понедельникам на Discord-сервере выходит новый тест на слух, в пятницу — ответ.",
-          en: "A new ear test goes up on the Discord server every Monday, and the answer on Friday.",
-        },
-      },
       {
         title: { ru: "Помощь, когда застрял", en: "Help when you're stuck" },
         text: {
@@ -322,8 +312,8 @@ export const trouvere = {
   },
   brandTitle: { ru: "Бренд и медиа", en: "Brand and media" } as L,
   brand: {
-    ru: "Бренд собран с нуля: имя, птичка-маскот Wren, палитра, шрифты и брендбук. Ролики, карусели и обложки делаются из одного набора шаблонов, поэтому приложение, Instagram*, Discord и каталог выглядят как одно целое, а новую серию легко продолжать.",
-    en: "The brand was built from scratch: the name, Wren the songbird mascot, the palette, the type and a brand guide. Reels, carousels and covers come from one template kit, so the app, Instagram*, Discord and the directory look like one thing, and a new series is easy to continue.",
+    ru: "Бренд собран с нуля: имя, птичка-маскот Wren, палитра, шрифты и брендбук. Ролики, карусели и обложки делаются из одного набора шаблонов, поэтому приложение, Instagram* и Discord выглядят как одно целое, а новую серию легко продолжать.",
+    en: "The brand was built from scratch: the name, Wren the songbird mascot, the palette, the type and a brand guide. Reels, carousels and covers come from one template kit, so the app, Instagram* and Discord look like one thing, and a new series is easy to continue.",
   } as L,
   phones: [
     { src: "/images/trouvere_mobile_songs.jpg", width: 780, height: 1688, alt: { ru: "Trouvère: экран песен", en: "Trouvère: the songs screen" } },
@@ -337,13 +327,6 @@ export const trouvere = {
       height: 1274,
       alt: { ru: "Обложки Reels Trouvère", en: "Trouvère reel covers" },
       caption: { ru: "Обложки Reels: одна система на все серии", en: "Reel covers: one system for every series" },
-    },
-    {
-      src: "/images/whichmusicapp_home.jpg",
-      width: 1800,
-      height: 1077,
-      alt: { ru: "Каталог whichmusicapp.com", en: "The whichmusicapp.com directory" },
-      caption: { ru: "Каталог whichmusicapp.com", en: "The whichmusicapp.com directory" },
     },
     {
       src: "/images/trouvere_carousel.jpg",
@@ -588,15 +571,11 @@ export const cases: CaseItem[] = [
 ];
 
 /*
- * Clients' reviews: the Telegram messages themselves, cropped screenshots rather than retyped quotes. In this order
- * three columns come out even: Мария's long one, then Алиса's, then the three short ones under each other.
+ * Clients' reviews: the Telegram messages themselves, cropped screenshots rather than retyped quotes, in one row
+ * (Ivan, 26 November 2026).
  */
 export const reviews = {
   title: { ru: "Отзывы", en: "Reviews" } as L,
-  lead: {
-    ru: "Что клиенты написали мне в Telegram, как есть.",
-    en: "What clients wrote to me on Telegram, as they wrote it (in Russian).",
-  } as L,
   items: [
     {
       src: "/images/reviews/maria.jpg",
@@ -653,8 +632,8 @@ export const approach = {
     {
       title: { ru: "Внимание зарабатываю пользой", en: "Attention is earned by being useful" },
       text: {
-        ru: "Тест на слух, каталог приложений, бот с расписанием: человек сначала получает что-то полезное и только потом узнаёт о продукте. Это работает и без рекламного бюджета.",
-        en: "An ear test, a directory of apps, a timetable bot: people get something useful first and hear about the product second. It works even with no ad budget.",
+        ru: "Тест на слух, бот с расписанием, библиотека карт для игры: человек сначала получает что-то полезное и только потом узнаёт о продукте. Это работает и без рекламного бюджета.",
+        en: "An ear test, a timetable bot, a library of game maps: people get something useful first and hear about the product second. It works even with no ad budget.",
       },
     },
     {
