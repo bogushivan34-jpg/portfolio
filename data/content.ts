@@ -978,13 +978,6 @@ export const about = {
       },
     },
     {
-      label: { ru: "Языки", en: "Languages" },
-      value: {
-        ru: "Английский — C1, французский — B1. Англоязычную версию Trouvère и её Instagram* веду сам",
-        en: "English C1, French B1. I run Trouvère's English version and its Instagram* myself",
-      },
-    },
-    {
       label: { ru: "Формат", en: "How I work" },
       value: {
         ru: "Удалённо или в Москве",
