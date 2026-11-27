@@ -49,22 +49,11 @@ export default function TrouvereCase({ lang }: { lang: Lang }) {
       </ul>
       <p className="mt-6 max-w-[760px] text-[18px] leading-[1.55] text-ink">{t.insight[lang]}</p>
 
-      {/* Funnel and channels, six months */}
+      {/* Channels, six months: the rows add up to the total */}
       <h4 className="mt-12 text-[22px] font-semibold leading-tight tracking-[-0.01em] text-ink">
         {t.funnel.title[lang]}
       </h4>
-      <ol className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line lg:grid-cols-4">
-        {t.funnel.steps.map((s, idx) => (
-          <li key={idx} className="bg-white p-4 sm:p-5">
-            <p className="num whitespace-nowrap text-[22px] leading-none sm:text-[26px]">{s.value[lang]}</p>
-            <p className="mt-2 text-[14px] leading-[1.45] text-muted">{s.label[lang]}</p>
-            {s.rate && <p className="mt-2 text-[14px] font-medium leading-[1.45] text-accent">{s.rate[lang]}</p>}
-          </li>
-        ))}
-      </ol>
-
-      <p className="label mt-8">{t.funnel.channelsTitle[lang]}</p>
-      <div className="mt-3 overflow-x-auto rounded-xl border border-line bg-white">
+      <div className="mt-5 overflow-x-auto rounded-xl border border-line bg-white">
         <table className="w-full text-left text-[14px] leading-[1.4] sm:text-[15px]">
           <thead>
             <tr className="text-[13px] text-muted">
@@ -87,6 +76,14 @@ export default function TrouvereCase({ lang }: { lang: Lang }) {
               </tr>
             ))}
           </tbody>
+          <tfoot>
+            <tr className="border-t border-line font-semibold text-ink">
+              <th scope="row" className="px-3 py-3 font-semibold sm:px-5">{t.funnel.total.channel[lang]}</th>
+              <td className="num hidden whitespace-nowrap px-3 py-3 text-right sm:table-cell">{t.funnel.total.visits[lang]}</td>
+              <td className="num px-2 py-3 text-right sm:px-3">{t.funnel.total.paid}</td>
+              <td className="num px-3 py-3 text-right sm:px-5">{t.funnel.total.revenue}</td>
+            </tr>
+          </tfoot>
         </table>
       </div>
       <p className="mt-3 max-w-[760px] text-[15px] leading-[1.55] text-muted">{t.funnel.note[lang]}</p>
@@ -95,7 +92,7 @@ export default function TrouvereCase({ lang }: { lang: Lang }) {
       <h4 className="mt-12 text-[22px] font-semibold leading-tight tracking-[-0.01em] text-ink">
         {t.channelsTitle[lang]}
       </h4>
-      <ol className="mt-7 grid gap-x-12 gap-y-8 md:grid-cols-2">
+      <ol className="mt-7 grid gap-x-10 gap-y-6 md:grid-cols-3">
         {t.channels.map((c, idx) => (
           <li key={idx} className="flex gap-4">
             <span className="num mt-[2px] w-5 shrink-0 text-[15px] text-accent">{idx + 1}</span>
@@ -110,37 +107,24 @@ export default function TrouvereCase({ lang }: { lang: Lang }) {
         {t.next[lang]}
       </p>
 
-      {/* Community */}
-      <div className="mt-12 grid gap-8 lg:grid-cols-12 lg:gap-12">
-        <div className="lg:col-span-7">
+      {/* Community, brand and media: two short texts over one row of pictures */}
+      <div className="mt-12 grid gap-8 md:grid-cols-2 md:gap-12">
+        <div>
           <h4 className="text-[22px] font-semibold leading-tight tracking-[-0.01em] text-ink">
             {t.community.title[lang]}
           </h4>
           <p className="mt-3">{t.community.lead[lang]}</p>
-          <ul className="mt-7 grid gap-x-8 gap-y-6 sm:grid-cols-2">
-            {t.community.points.map((p, idx, all) => (
-              // an odd last point takes the whole row
-              <li
-                key={idx}
-                className={`border-t border-line pt-4 ${all.length % 2 && idx === all.length - 1 ? "sm:col-span-2" : ""}`}
-              >
-                <p className="font-semibold text-ink">{p.title[lang]}</p>
-                <p className="mt-1 text-[16px] leading-[1.55]">{p.text[lang]}</p>
-              </li>
-            ))}
-          </ul>
         </div>
-        <div className="lg:col-span-5">
-          <Figure shot={t.community.shot} lang={lang} />
+        <div>
+          <h4 className="text-[22px] font-semibold leading-tight tracking-[-0.01em] text-ink">{t.brandTitle[lang]}</h4>
+          <p className="mt-3">{t.brand[lang]}</p>
         </div>
       </div>
-
-      {/* Brand and media */}
-      <h4 className="mt-12 text-[22px] font-semibold leading-tight tracking-[-0.01em] text-ink">
-        {t.brandTitle[lang]}
-      </h4>
-      <p className="mt-3 max-w-[760px]">{t.brand[lang]}</p>
-      <div className="mt-7 grid gap-5 sm:grid-cols-2">
+      <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
+        {/* a phone gives the Discord banner the whole row and the two brand pictures half each */}
+        <div className="col-span-2 lg:col-span-1">
+          <Figure shot={t.community.shot} lang={lang} crop />
+        </div>
         {t.shots.map((shot) => (
           <Figure key={shot.src} shot={shot} lang={lang} crop />
         ))}

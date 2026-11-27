@@ -194,6 +194,28 @@ for (let attempt = 1; ; attempt++) {
   }
 }
 
+// The site's own files named by absolute path in its scripts (src: "/ornaments/frame.webp", from public/): Vite makes
+// those relative in HTML and CSS, not in JavaScript, so on the site they'd point at ivanbogush.ru/ornaments/… and 404.
+// Each one that names a file in the build becomes relative, which the browser resolves against the preview's page.
+const rooted = new Set();
+(function walk(dir) {
+  for (const f of readdirSync(dir)) {
+    const p = path.join(dir, f);
+    if (statSync(p).isDirectory()) { walk(p); continue; }
+    if (!/\.m?js$/.test(f)) continue;
+    const src = readFileSync(p, "utf8");
+    const out = src.replace(/(["'`])\/((?!\/)[^"'`\s?#]+)\1/g, (all, q, rel) => {
+      let file;
+      try { file = statSync(path.join(outDir, decodeURIComponent(rel))); } catch { return all; }
+      if (!file.isFile()) return all;
+      rooted.add(rel);
+      return `${q}${rel}${q}`;
+    });
+    if (out !== src) writeFileSync(p, out);
+  }
+})(outDir);
+if (rooted.size) console.log(`Paths in the scripts made relative to the preview: ${[...rooted].join(", ")}`);
+
 // Vite leaves a url() in the CSS it couldn't find as written, so it 404s in the preview (fonts the builder never
 // shipped). The audit should have caught it; this catches whatever it didn't.
 const unresolved = [];
